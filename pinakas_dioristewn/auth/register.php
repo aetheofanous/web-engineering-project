@@ -48,7 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'This email is already registered.';
             }
         } catch (PDOException $e) {
-            $errors[] = 'Database error: ' . $e->getMessage();
+            error_log('Register DB error: ' . $e->getMessage());
+            $errors[] = 'Database error. Please try again later.';
         }
     }
 
@@ -73,7 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $success = 'Registration successful. You can now log in.';
         } catch (PDOException $e) {
-            $errors[] = 'Registration failed: ' . $e->getMessage();
+            error_log('Register DB error: ' . $e->getMessage());
+            $errors[] = 'Registration failed. Please try again later.';
         }
     }
 }

@@ -17,7 +17,9 @@ $options = [
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (PDOException $e) {
-    die('Connection failed: ' . $e->getMessage());
+    // Never expose sensitive DB errors to users
+    error_log('DB connection failed: ' . $e->getMessage());
+    die('Database connection failed. Please try again later.');
 }
 
 return $pdo;

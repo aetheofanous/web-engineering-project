@@ -42,7 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $errors[] = 'Invalid email or password.';
         } catch (PDOException $e) {
-            $errors[] = 'Database error: ' . $e->getMessage();
+            error_log('Login DB error: ' . $e->getMessage());
+            $errors[] = 'Database error. Please try again later.';
         }
     }
 }
