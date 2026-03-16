@@ -1,11 +1,23 @@
-<!DOCTYPE html>
-<html>
-<h1>Choose Module</h1>
-<img src="assets/img/statics.png" width="120">
-<ul>
-  <li><a href="admin/dashboard.html">Admin</a></li>
-  <li><a href="candidate/dashboard.html">Candidate</a></li>
-  <li><a href="search/dashboard.html">Search</a></li>
-  <li><a href="api/api.php">API</a></li>
-</ul>    
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Project Home</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <h1 class="auth-title">Choose Module</h1>
+      <p class="auth-subtitle">Quick links to the new structure.</p>
+      <ul>
+        <li><a href="auth/login.php">Login</a></li>
+        <li><a href="auth/register.php">Register</a></li>
+        <li><a href="modules/dashboard.php">Dashboard</a></li>
+        <li><a href="modules/list.php">Candidate List</a></li>
+        <li><a href="api/api.php">API</a></li>
+      </ul>
+    </div>
+  </div>
+</body>
 </html>
