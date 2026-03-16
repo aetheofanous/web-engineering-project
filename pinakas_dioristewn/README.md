@@ -29,3 +29,11 @@ This project uses a simple PDO-based auth system and a MySQL schema for the `app
 ## Login URL
 
 `http://localhost/web-engineering-project/pinakas_dioristewn/auth/login.php`
+
+## Κανόνες Ασφάλειας (Υποχρεωτικοί)
+
+- ΠΑΝΤΑ Prepared Statements — ποτέ string concatenation σε SQL
+- ΠΑΝΤΑ password_hash() — ποτέ plain-text password στη βάση
+- ΠΑΝΤΑ htmlspecialchars() σε κάθε echo user data (XSS protection)
+- ΠΑΝΤΑ exit μετά από κάθε header() redirect
+- ΠΟΤΕ die($e->getMessage()) — εκθέτει credentials βάσης
