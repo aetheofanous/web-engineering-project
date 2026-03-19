@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<h1>Search Dashboard</h1>
+<img src="../assets/img/search.png" width="120">
+<ul>
+  <li><a href="search.html">Search</a></li>
+  <li><a href="register.html">Register</a></li>
+  <li><a href="statistics.html">Statistics</a></li>
+</ul>
+
+<a href="../index.html">Back to Home</a>
+
+</html>
