@@ -9,18 +9,17 @@ function h($value) {
 }
 
 $errors = [];
-$success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Collect and validate input
-    $name = trim($_POST['name'] ?? '');
-    $surname = trim($_POST['surname'] ?? '');
+    $username = trim($_POST['username'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
-    $phone = trim($_POST['phone'] ?? '');
+    $confirm_password = $_POST['confirm_password'] ?? '';
     $role = trim($_POST['role'] ?? '');
 
-    if ($name === '' || $surname === '' || $email === '' || $password === '' || $role === '') {
+    // Validation
+    if ($username === '' || $email === '' || $password === '' || $confirm_password === '' || $role === '') {
         $errors[] = 'All required fields must be filled in.';
     }
 
@@ -28,8 +27,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Please enter a valid email address.';
     }
 
-    if ($password !== '' && strlen($password) < 6) {
-        $errors[] = 'Password must be at least 6 characters long.';
+    if ($password !== '' && strlen($password) < 8) {
+        $errors[] = 'Password must be at least 8 characters long.';
+    }
+
+    if ($password !== $confirm_password) {
+        $errors[] = 'Passwords do not match.';
     }
 
     if ($role !== '' && !in_array($role, ['admin', 'candidate'], true)) {
@@ -56,23 +59,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$errors) {
         try {
             $hashed = password_hash($password, PASSWORD_DEFAULT);
-            $phoneValue = $phone === '' ? null : $phone;
 
             $stmt = $pdo->prepare(
-                'INSERT INTO users (name, surname, email, password, phone, role)
-                 VALUES (:name, :surname, :email, :password, :phone, :role)'
+                'INSERT INTO users (username, email, password_hash, role)
+                 VALUES (:username, :email, :password_hash, :role)'
             );
 
             $stmt->execute([
-                'name' => $name,
-                'surname' => $surname,
+                'username' => $username,
                 'email' => $email,
-                'password' => $hashed,
-                'phone' => $phoneValue,
+                'password_hash' => $hashed,
                 'role' => $role,
             ]);
 
-            $success = 'Registration successful. You can now log in.';
+            header('Location: login.php?registered=1');
+            exit;
         } catch (PDOException $e) {
             error_log('Register DB error: ' . $e->getMessage());
             $errors[] = 'Registration failed. Please try again later.';
@@ -93,29 +94,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h1 class="auth-title">Create Account</h1>
             <p class="auth-subtitle">Fill in your details to get started.</p>
 
-            <?php if ($success): ?>
-                <div class="message success"><?php echo h($success); ?></div>
-            <?php endif; ?>
-
             <?php foreach ($errors as $error): ?>
                 <div class="message error"><?php echo h($error); ?></div>
             <?php endforeach; ?>
 
             <form method="post" action="">
-                <label for="name">Name*</label>
-                <input type="text" name="name" id="name" value="<?php echo h($_POST['name'] ?? ''); ?>" required>
-
-                <label for="surname">Surname*</label>
-                <input type="text" name="surname" id="surname" value="<?php echo h($_POST['surname'] ?? ''); ?>" required>
+                <label for="username">Username*</label>
+                <input type="text" name="username" id="username" value="<?php echo h($_POST['username'] ?? ''); ?>" required>
 
                 <label for="email">Email*</label>
                 <input type="email" name="email" id="email" value="<?php echo h($_POST['email'] ?? ''); ?>" required>
 
-                <label for="password">Password* (min 6 chars)</label>
+                <label for="password">Password* (min 8 chars)</label>
                 <input type="password" name="password" id="password" required>
 
-                <label for="phone">Phone</label>
-                <input type="text" name="phone" id="phone" value="<?php echo h($_POST['phone'] ?? ''); ?>">
+                <label for="confirm_password">Confirm Password*</label>
+                <input type="password" name="confirm_password" id="confirm_password" required>
 
                 <label for="role">Role*</label>
                 <select name="role" id="role" required>

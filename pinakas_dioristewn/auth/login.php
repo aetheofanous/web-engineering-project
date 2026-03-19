@@ -27,13 +27,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo = require __DIR__ . '/../includes/db.php';
 
-            $stmt = $pdo->prepare('SELECT id, name, role, password FROM users WHERE email = :email LIMIT 1');
+            $stmt = $pdo->prepare('SELECT id, username, role, password_hash FROM users WHERE email = :email LIMIT 1');
             $stmt->execute(['email' => $email]);
             $user = $stmt->fetch();
 
-            if ($user && password_verify($password, $user['password'])) {
+            if ($user && password_verify($password, $user['password_hash'])) {
                 $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_name'] = $user['name'];
+                $_SESSION['user_name'] = $user['username'];
                 $_SESSION['user_role'] = $user['role'];
 
                 header('Location: ../modules/dashboard.php');
