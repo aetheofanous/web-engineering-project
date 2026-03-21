@@ -1,35 +1,35 @@
 ﻿<?php
-// Protected dashboard page
-
 session_start();
 
-if (empty($_SESSION['user_id'])) {
+// SESSION GUARD
+if (!isset($_SESSION['user_id'])) {
     header('Location: ../auth/login.php');
     exit;
 }
 
-$user_name = $_SESSION['user_name'] ?? 'User';
-$user_role = $_SESSION['user_role'] ?? 'candidate';
+// Helper για XSS protection
+function e($value) {
+    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+}
 ?>
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="el">
 <head>
     <meta charset="UTF-8">
     <title>Dashboard</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-card">
-            <h1 class="auth-title">Dashboard</h1>
-            <p class="auth-subtitle">Welcome, <?php echo htmlspecialchars($user_name, ENT_QUOTES, 'UTF-8'); ?>.</p>
 
-            <p>You are logged in as <strong><?php echo htmlspecialchars($user_role, ENT_QUOTES, 'UTF-8'); ?></strong>.</p>
+<h1>Dashboard</h1>
 
-            <div class="auth-footer">
-                <a href="list.php">View Lists</a> | <a href="../auth/logout.php">Logout</a>
-            </div>
-        </div>
-    </div>
+<p>Καλωσόρισες, <strong><?php echo e($_SESSION['username']); ?></strong></p>
+<p>Ρόλος: <strong><?php echo e($_SESSION['role']); ?></strong></p>
+
+<ul>
+    <li><a href="list.php">Λίστα Υποψηφίων</a></li>
+    <li><a href="../auth/logout.php">Logout</a></li>
+</ul>
+
 </body>
 </html>

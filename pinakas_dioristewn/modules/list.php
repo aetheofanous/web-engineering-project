@@ -1,94 +1,93 @@
 ﻿<?php
-// List page with keyword search
-
 session_start();
 
-if (empty($_SESSION['user_id'])) {
+// SESSION GUARD
+if (!isset($_SESSION['user_id'])) {
     header('Location: ../auth/login.php');
     exit;
 }
 
-// Helper: safely escape output
-function h($value) {
+// DB CONNECTION (PDO)
+$pdo = require __DIR__ . '/../includes/db.php';
+
+// Helper για XSS protection
+function e($value) {
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
 
-$pdo = require __DIR__ . '/../includes/db.php';
+// Παίρνουμε keyword από GET
+$keyword = trim($_GET['keyword'] ?? '');
 
-$q = trim($_GET['q'] ?? '');
-$params = [];
+if ($keyword !== '') {
+    // SEARCH με prepared statement
+    $stmt = $pdo->prepare("
+        SELECT * FROM candidates
+        WHERE full_name LIKE :kw OR specialty LIKE :kw
+        ORDER BY list_year DESC, position_number ASC
+    ");
 
-$sql = "SELECT c.id, c.name, c.surname, c.birth_year, c.position, c.points, l.year, s.name AS specialty
-        FROM candidates c
-        JOIN lists l ON c.list_id = l.id
-        JOIN specialties s ON c.specialty_id = s.id";
-
-if ($q !== '') {
-    $sql .= " WHERE c.name LIKE :term OR c.surname LIKE :term OR s.name LIKE :term";
-    $params['term'] = '%' . $q . '%';
+    $stmt->execute([
+        'kw' => '%' . $keyword . '%'
+    ]);
+} else {
+    // Αν δεν υπάρχει search → δείχνουμε όλα
+    $stmt = $pdo->query("
+        SELECT * FROM candidates
+        ORDER BY list_year DESC, position_number ASC
+    ");
 }
 
-$sql .= " ORDER BY l.year DESC, c.position ASC";
-
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$rows = $stmt->fetchAll();
+$candidates = $stmt->fetchAll();
 ?>
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="el">
 <head>
     <meta charset="UTF-8">
-    <title>Candidate Lists</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <title>Candidates List</title>
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-card">
-            <h1 class="auth-title">Candidate Lists</h1>
-            <p class="auth-subtitle">Search by name, surname, or specialty.</p>
 
-            <form method="get" action="" class="search-form">
-                <input type="text" name="q" placeholder="Search..." value="<?php echo h($q); ?>">
-                <button type="submit">Search</button>
-            </form>
+<h1>Λίστα Υποψηφίων</h1>
 
-            <?php if (!$rows): ?>
-                <p>No results found.</p>
-            <?php else: ?>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Name</th>
-                                <th>Surname</th>
-                                <th>Specialty</th>
-                                <th>Year</th>
-                                <th>Position</th>
-                                <th>Points</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($rows as $row): ?>
-                                <tr>
-                                    <td><?php echo h($row['id']); ?></td>
-                                    <td><?php echo h($row['name']); ?></td>
-                                    <td><?php echo h($row['surname']); ?></td>
-                                    <td><?php echo h($row['specialty']); ?></td>
-                                    <td><?php echo h($row['year']); ?></td>
-                                    <td><?php echo h($row['position']); ?></td>
-                                    <td><?php echo h($row['points']); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
+<!-- SEARCH FORM -->
+<form method="GET">
+    <input type="text" name="keyword" placeholder="Όνομα ή ειδικότητα"
+           value="<?php echo e($keyword); ?>">
+    <button type="submit">Search</button>
+</form>
 
-            <div class="auth-footer">
-                <a href="dashboard.php">Back to Dashboard</a> | <a href="../auth/logout.php">Logout</a>
-            </div>
-        </div>
-    </div>
+<br>
+
+<a href="dashboard.php">Dashboard</a> |
+<a href="../auth/logout.php">Logout</a>
+
+<br><br>
+
+<!-- RESULTS -->
+<?php if ($candidates): ?>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>ID</th>
+            <th>Full Name</th>
+            <th>Specialty</th>
+            <th>Position</th>
+            <th>Year</th>
+        </tr>
+
+        <?php foreach ($candidates as $c): ?>
+            <tr>
+                <td><?php echo e($c['id']); ?></td>
+                <td><?php echo e($c['full_name']); ?></td>
+                <td><?php echo e($c['specialty']); ?></td>
+                <td><?php echo e($c['position_number']); ?></td>
+                <td><?php echo e($c['list_year']); ?></td>
+            </tr>
+        <?php endforeach; ?>
+    </table>
+<?php else: ?>
+    <p>Δεν βρέθηκαν αποτελέσματα.</p>
+<?php endif; ?>
+
 </body>
 </html>
