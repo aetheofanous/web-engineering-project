@@ -9,7 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Πίνακες Διοριστέων</title>
-    <link rel="stylesheet" href="http://localhost/pinakas_dioristewn/assets/css/style.css?v=123">
+    <link rel="stylesheet" href="http://localhost/pinakas_dioristewn/assets/css/style.css?v=2">
 </head>
 <body>
 
