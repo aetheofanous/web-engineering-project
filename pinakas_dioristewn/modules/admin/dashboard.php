@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Dashboard</title>
+</head>
+<body>
+
+  <h1>Admin Dashboard</h1>
+<img src="../assets/img/icon-admin.png" width="120">
+  <ul>
+    <li><a href="manage_users.html">Manage Users</a></li>
+    <li><a href="manage_lists.html">Manage Lists</a></li>
+    <li><a href="reports.html">Reports</a></li>
+  </ul>
+
+  <a href="../index.html">Back to Home</a>
+
+</body>
+</html>
