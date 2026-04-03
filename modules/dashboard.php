@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -6,44 +6,49 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-function h($value) {
-    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-}
-
 $username = $_SESSION['username'] ?? 'User';
 $role = $_SESSION['role'] ?? 'candidate';
-
-require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../includes/nav.php';
 ?>
-
-<div class="page-wrap">
-    <div class="page-card">
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle">
-            Καλωσόρισες, <strong><?php echo h($username); ?></strong>.
-        </p>
-
-        <div class="quick-grid">
-            <div class="quick-box">
-                <h3>Στοιχεία Χρήστη</h3>
-                <p><strong>Username:</strong> <?php echo h($username); ?></p>
-                <p><strong>Role:</strong> <?php echo h($role); ?></p>
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <title>Πίνακας Ελέγχου</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="page-banner">
+                <p class="eyebrow">Προσωπικός Χώρος</p>
+                <h1 class="auth-title">Πίνακας Ελέγχου</h1>
+                <p class="auth-subtitle">Καλωσορίσατε, <?php echo htmlspecialchars($username, ENT_QUOTES, 'UTF-8'); ?>. Από εδώ μπορείτε να μεταβείτε στους καταλόγους διοριστέων και στις βασικές λειτουργίες της εφαρμογής.</p>
             </div>
 
-            <div class="quick-box">
-                <h3>Λίστα Υποψηφίων</h3>
-                <p>Αναζήτηση υποψηφίων με λέξη-κλειδί.</p>
-                <p><a href="list.php">Άνοιγμα λίστας</a></p>
-            </div>
+            <div class="page-body">
+                <div class="info-grid">
+                    <section class="info-box">
+                        <h2>Στοιχεία Λογαριασμού</h2>
+                        <p class="section-text">Όνομα χρήστη: <strong><?php echo htmlspecialchars($username, ENT_QUOTES, 'UTF-8'); ?></strong></p>
+                        <p class="section-text">Ρόλος: <span class="status-badge"><?php echo htmlspecialchars($role, ENT_QUOTES, 'UTF-8'); ?></span></p>
+                    </section>
 
-            <div class="quick-box">
-                <h3>Αποσύνδεση</h3>
-                <p>Έξοδος από το σύστημα.</p>
-                <p><a href="../auth/logout.php">Logout</a></p>
+                    <section class="info-box">
+                        <h2>Διαθέσιμες Ενέργειες</h2>
+                        <ul class="plain-list">
+                            <li>Προβολή και αναζήτηση στους καταλόγους διοριστέων.</li>
+                            <li>Πλοήγηση με ασφαλή συνεδρία χρήστη.</li>
+                            <li>Άμεση αποσύνδεση από την εφαρμογή.</li>
+                        </ul>
+                    </section>
+                </div>
+
+                <div class="page-actions">
+                    <a class="button-link" href="list.php">Μετάβαση στους Καταλόγους</a>
+                    <a class="button-link secondary" href="../auth/logout.php">Αποσύνδεση</a>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+</body>
+</html>

@@ -4,12 +4,20 @@
 
 USE appointable_lists;
 
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS tracked_candidates;
+DROP TABLE IF EXISTS applications;
+DROP TABLE IF EXISTS candidates;
+DROP TABLE IF EXISTS lists;
+DROP TABLE IF EXISTS specialties;
+DROP TABLE IF EXISTS users;
+
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(100) NOT NULL,
   email VARCHAR(150) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  role ENUM('admin','candidate') NOT NULL DEFAULT 'candidate',
+  role ENUM('admin','candidate') NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -31,7 +39,6 @@ CREATE TABLE lists (
 
 CREATE TABLE candidates (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NULL,
   name VARCHAR(100) NOT NULL,
   surname VARCHAR(100) NOT NULL,
   birth_year INT,
@@ -40,9 +47,6 @@ CREATE TABLE candidates (
   position INT NOT NULL,
   points DECIMAL(5,2),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_candidates_user
-    FOREIGN KEY (user_id) REFERENCES users(id)
-    ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_candidates_specialty
     FOREIGN KEY (specialty_id) REFERENCES specialties(id)
     ON DELETE RESTRICT ON UPDATE CASCADE,

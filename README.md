@@ -1,10 +1,23 @@
-﻿# Appointable Lists (PDO)
+# Appointable Lists (PDO)
 
 This project uses a simple PDO-based auth system and a MySQL schema for the `appointable_lists` database.
 
+## Team
+
+- Add your team members and student IDs here.
+- Example: Maria Ioannou (AM 12345)
+- Example: Giorgos Papas (AM 67890)
+
+## Responsibilities
+
+- Add which student handled each file or feature.
+- Example: `database/schema.sql` and `includes/db.php`
+- Example: `auth/register.php` and `auth/login.php`
+- Example: `modules/dashboard.php` and `modules/list.php`
+
 ## Folder Structure
 
-- `database/schema.sql` - CREATE DATABASE + CREATE TABLE statements
+- `database/schema.sql` - CREATE TABLE statements
 - `database/seed.sql` - demo data inserts
 - `includes/db.php` - PDO connection
 - `auth/register.php` - user registration
@@ -15,25 +28,27 @@ This project uses a simple PDO-based auth system and a MySQL schema for the `app
 
 ## Setup
 
-1. Start Apache & MySQL in XAMPP.
+1. Start Apache and MySQL in XAMPP.
 2. Open phpMyAdmin: `http://localhost/phpmyadmin`
-3. Import `database/schema.sql` into MySQL.
-4. (Optional) Import `database/seed.sql` for demo data.
-5. Make sure `includes/db.php` matches your DB credentials.
+3. Import `database/schema.sql`.
+4. Import `database/seed.sql`.
+5. Make sure `includes/db.php` matches your database credentials.
+6. Open the login page in the browser.
 
-## Demo Accounts (from seed.sql)
+## Demo Accounts
 
 - Admin: `admin@example.com` / password: `password`
 - Candidate: `eleni@example.com` / password: `password`
+- Candidate: `maria@example.com` / password: `password`
 
 ## Login URL
 
-`http://localhost/web-engineering-project/pinakas_dioristewn/auth/login.php`
+`http://localhost/pinakas_dioristewn/auth/login.php`
 
-## Κανόνες Ασφάλειας (Υποχρεωτικοί)
+## Security Rules
 
-- ΠΑΝΤΑ Prepared Statements — ποτέ string concatenation σε SQL
-- ΠΑΝΤΑ password_hash() — ποτέ plain-text password στη βάση
-- ΠΑΝΤΑ htmlspecialchars() σε κάθε echo user data (XSS protection)
-- ΠΑΝΤΑ exit μετά από κάθε header() redirect
-- ΠΟΤΕ die($e->getMessage()) — εκθέτει credentials βάσης
+- Always use Prepared Statements, never string concatenation in SQL.
+- Always use `password_hash()` and `password_verify()`.
+- Always use `htmlspecialchars()` when echoing user-controlled data.
+- Always call `exit` after every `header()` redirect.
+- Never expose `$e->getMessage()` to the browser.
