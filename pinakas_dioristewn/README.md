@@ -1,4 +1,11 @@
-﻿# Appointable Lists (PDO)
+﻿## Students' Names + ID's
+   - Antriani Theofanous 30570
+   - Sophia Kyriacou 30288
+   - Christiana Stylianou 30356
+   - Panteleimoni Alexandrou 30402
+   - Pelagia Koniotaki 31511
+
+# Appointable Lists (PDO)
 
 This project uses a simple PDO-based auth system and a MySQL schema for the `appointable_lists` database.
 
