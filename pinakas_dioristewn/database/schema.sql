@@ -4,13 +4,19 @@
 
 USE appointable_lists;
 
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS tracked_candidates;
+DROP TABLE IF EXISTS applications;
+DROP TABLE IF EXISTS candidates;
+DROP TABLE IF EXISTS lists;
+DROP TABLE IF EXISTS specialties;
+DROP TABLE IF EXISTS users;
+
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  surname VARCHAR(100) NOT NULL,
+  username VARCHAR(100) NOT NULL,
   email VARCHAR(150) NOT NULL UNIQUE,
-  password VARCHAR(255) NOT NULL,
-  phone VARCHAR(20),
+  password_hash VARCHAR(255) NOT NULL,
   role ENUM('admin','candidate') NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;

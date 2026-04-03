@@ -1,35 +1,54 @@
-﻿<?php
+<?php
 session_start();
 
-// SESSION GUARD
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../auth/login.php');
     exit;
 }
 
-// Helper για XSS protection
-function e($value) {
-    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-}
+$username = $_SESSION['username'] ?? 'User';
+$role = $_SESSION['role'] ?? 'candidate';
 ?>
-
 <!DOCTYPE html>
 <html lang="el">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard</title>
+    <title>Πίνακας Ελέγχου</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="page-banner">
+                <p class="eyebrow">Προσωπικός Χώρος</p>
+                <h1 class="auth-title">Πίνακας Ελέγχου</h1>
+                <p class="auth-subtitle">Καλωσορίσατε, <?php echo htmlspecialchars($username, ENT_QUOTES, 'UTF-8'); ?>. Από εδώ μπορείτε να μεταβείτε στους καταλόγους διοριστέων και στις βασικές λειτουργίες της εφαρμογής.</p>
+            </div>
 
-<h1>Dashboard</h1>
+            <div class="page-body">
+                <div class="info-grid">
+                    <section class="info-box">
+                        <h2>Στοιχεία Λογαριασμού</h2>
+                        <p class="section-text">Όνομα χρήστη: <strong><?php echo htmlspecialchars($username, ENT_QUOTES, 'UTF-8'); ?></strong></p>
+                        <p class="section-text">Ρόλος: <span class="status-badge"><?php echo htmlspecialchars($role, ENT_QUOTES, 'UTF-8'); ?></span></p>
+                    </section>
 
-<p>Καλωσόρισες, <strong><?php echo e($_SESSION['username']); ?></strong></p>
-<p>Ρόλος: <strong><?php echo e($_SESSION['role']); ?></strong></p>
+                    <section class="info-box">
+                        <h2>Διαθέσιμες Ενέργειες</h2>
+                        <ul class="plain-list">
+                            <li>Προβολή και αναζήτηση στους καταλόγους διοριστέων.</li>
+                            <li>Πλοήγηση με ασφαλή συνεδρία χρήστη.</li>
+                            <li>Άμεση αποσύνδεση από την εφαρμογή.</li>
+                        </ul>
+                    </section>
+                </div>
 
-<ul>
-    <li><a href="list.php">Λίστα Υποψηφίων</a></li>
-    <li><a href="../auth/logout.php">Logout</a></li>
-</ul>
-
+                <div class="page-actions">
+                    <a class="button-link" href="list.php">Μετάβαση στους Καταλόγους</a>
+                    <a class="button-link secondary" href="../auth/logout.php">Αποσύνδεση</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
