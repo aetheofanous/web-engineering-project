@@ -1,54 +1,144 @@
-# Appointable Lists (PDO)
+# Appointable Lists System
 
-This project uses a simple PDO-based auth system and a MySQL schema for the `appointable_lists` database.
+## 👥 Team Members
+- Παντελεήμωνη Αλεξάνδρου (AM 30402)
+- Χριστιάνα Στυλιανού (AM 30356)
+- Αντριάνα Θεοφάνους (AM 30570)
+- Σοφία Κυριάκου (AM 30288)
+- Πελαγία Κωνιωτάκη (AM 31511)
 
-## Team
+---
 
-- Add your team members and student IDs here.
-- Example: Maria Ioannou (AM 12345)
-- Example: Giorgos Papas (AM 67890)
+## 📌 Project Description
+Το σύστημα “Appointable Lists” είναι μια web εφαρμογή σε PHP/MySQL για την παρακολούθηση υποψηφίων και πινάκων διοριστέων.
 
-## Responsibilities
+Η εφαρμογή επιτρέπει στους χρήστες να:
+- δημιουργούν λογαριασμό (register)
+- συνδέονται με ασφάλεια (login)
+- βλέπουν protected dashboard
+- αναζητούν υποψηφίους μέσω keyword search
 
-- Add which student handled each file or feature.
-- Example: `database/schema.sql` and `includes/db.php`
-- Example: `auth/register.php` and `auth/login.php`
-- Example: `modules/dashboard.php` and `modules/list.php`
+---
 
-## Folder Structure
+## ⚙️ Technologies Used
+- PHP (PDO)
+- MySQL
+- HTML / CSS
+- XAMPP (Apache + MySQL)
 
-- `database/schema.sql` - CREATE TABLE statements
-- `database/seed.sql` - demo data inserts
-- `includes/db.php` - PDO connection
-- `auth/register.php` - user registration
-- `auth/login.php` - user login
-- `auth/logout.php` - user logout
-- `modules/dashboard.php` - protected dashboard
-- `modules/list.php` - candidate list + keyword search
+---
 
-## Setup
+## 🔐 Security Features
+Η εφαρμογή ακολουθεί βασικές πρακτικές ασφάλειας:
 
-1. Start Apache and MySQL in XAMPP.
-2. Open phpMyAdmin: `http://localhost/phpmyadmin`
-3. Import `database/schema.sql`.
-4. Import `database/seed.sql`.
-5. Make sure `includes/db.php` matches your database credentials.
-6. Open the login page in the browser.
+- Prepared Statements (PDO) για αποφυγή SQL Injection
+- password_hash() για ασφαλή αποθήκευση κωδικών
+- password_verify() για έλεγχο login
+- htmlspecialchars() για αποφυγή XSS attacks
+- Session-based authentication
+- Redirect + exit για ασφαλή navigation
 
-## Demo Accounts
+---
 
-- Admin: `admin@example.com` / password: `password`
-- Candidate: `eleni@example.com` / password: `password`
-- Candidate: `maria@example.com` / password: `password`
+## 📁 Project Structure
+pinakas_dioristewn/
+│
+├── database/
+│ ├── schema.sql
+│ └── seed.sql
+│
+├── includes/
+│ └── db.php
+│
+├── auth/
+│ ├── register.php
+│ ├── login.php
+│ └── logout.php
+│
+├── modules/
+│ ├── dashboard.php
+│ └── list.php
+│
+├── assets/
+│ └── css/style.css
+│
+└── index.php
 
-## Login URL
+---
 
-`http://localhost/pinakas_dioristewn/auth/login.php`
+## 🚀 Setup Instructions
 
-## Security Rules
+1. Εκκίνηση XAMPP
+2. Εκκίνηση Apache και MySQL
+3. Άνοιγμα phpMyAdmin
+4. Δημιουργία database: appointable_lists
+5. Import των αρχείων:
+- database/schema.sql
+- database/seed.sql
 
-- Always use Prepared Statements, never string concatenation in SQL.
-- Always use `password_hash()` and `password_verify()`.
-- Always use `htmlspecialchars()` when echoing user-controlled data.
-- Always call `exit` after every `header()` redirect.
-- Never expose `$e->getMessage()` to the browser.
+6. Άνοιγμα εφαρμογής στον browser: http://localhost/pinakas_dioristewn/
+
+---
+
+## 🔑 Demo Users
+
+| Email              | Password |
+|-------------------|----------|
+| admin@example.com | password |
+| eleni@example.com | password |
+
+---
+
+## 🧩 Features
+
+- ✔ User Registration με validation
+- ✔ Secure Login / Logout
+- ✔ Protected Dashboard (session-based)
+- ✔ Candidate List με keyword search
+- ✔ Responsive και καθαρό UI design
+
+---
+
+## 🧑‍💻 Responsibilities
+
+- Παντελεήμωνη Αλεξάνδρου:
+  - Authentication system (Register / Login / Logout)
+  - Session management & security (password_hash, password_verify)
+  - Dashboard implementation (protected page)
+  - UI design and styling (CSS, layout consistency)
+  - Integration of backend with frontend
+
+- Χριστιάνα Στυλιανού:
+  - Database design (schema.sql)
+  - Creation of users table and relations
+  - Seed data implementation (seed.sql)
+  - Database structure validation
+
+- Αντριανή Θεοφάνους:
+  - Candidate list module (list.php)
+  - Keyword search functionality (GET + LIKE query)
+  - Data display in table format
+  - Query optimization and filtering logic
+
+- Σοφία Κυριάκου:
+  - Input validation (server-side validation rules)
+  - Error handling (forms & messages)
+  - Security checks (prepared statements usage)
+  - Form structure and usability improvements
+
+- Πελαγία Κωνιωτάκη:
+  - UI/UX improvements (layout, navigation)
+  - Page structure consistency (header, footer, navigation)
+  - Design alignment across all pages
+  - General testing and bug fixing
+
+---
+
+## 📌 Notes
+Το project υλοποιήθηκε σύμφωνα με τις οδηγίες του μαθήματος και ακολουθεί τις βασικές αρχές ασφάλειας και καλής πρακτικής στον web development.
+
+---
+
+## 🏁 Status
+✔ Fully functional  
+✔ Ready for submission  
