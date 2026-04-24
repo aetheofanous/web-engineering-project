@@ -42,6 +42,7 @@ $rows = $stmt->fetchAll();
     <link rel="stylesheet" href="../assets/css/style.css?v=<?php echo @filemtime(__DIR__ . '/../assets/css/style.css') ?: time(); ?>">
 </head>
 <body>
+    <?php require __DIR__ . '/../includes/notifications_bell.php'; ?>
     <div class="auth-container">
         <div class="auth-card">
             <div class="page-banner">

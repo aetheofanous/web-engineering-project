@@ -104,6 +104,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
+            // Notify all admins about the new registration. Non-fatal — a failure
+            // here must not block the registration flow.
+            try {
+                $fullName = trim($name . ' ' . $surname);
+                $displayName = $fullName !== '' ? $fullName : $email;
+                notify_all_admins(sprintf(
+                    'Νέος χρήστης εγγράφηκε: %s (%s) — ρόλος: %s',
+                    $displayName,
+                    $email,
+                    $role
+                ));
+            } catch (Throwable $adminNotifyException) {
+                error_log('notify_all_admins failed: ' . $adminNotifyException->getMessage());
+            }
+
             add_flash('success', 'Ο λογαριασμός δημιουργήθηκε επιτυχώς. Μπορείτε να συνδεθείτε.');
             redirect_to('auth/login.php?registered=1');
         } catch (PDOException $exception) {

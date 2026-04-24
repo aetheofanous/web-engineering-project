@@ -130,6 +130,7 @@ $chartStatusCounts = array_map(function ($row) {
     </style>
 </head>
 <body>
+    <?php require __DIR__ . '/../../includes/notifications_bell.php'; ?>
     <div class="auth-container">
         <div class="auth-card">
             <div class="page-banner">

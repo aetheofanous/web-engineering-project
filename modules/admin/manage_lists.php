@@ -263,7 +263,9 @@ $messages = array_merge(
         }
     });
 </script>
-</body>
+<body>
+    <?php require __DIR__ . '/../../includes/notifications_bell.php'; ?>
+    <div class="auth-container">
         <div class="auth-card">
             <div class="page-banner">
                 <div class="banner-row-flex">
@@ -483,5 +485,6 @@ $messages = array_merge(
             }
         });
     </script>
+    </div> <!-- close auth-container -->
 </body>
 </html>

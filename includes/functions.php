@@ -375,6 +375,82 @@ function create_notification(int $userId, string $message): void
 }
 
 /**
+ * Return the number of unread notifications for a given user.
+ * Used for the red badge next to the bell icon.
+ */
+function count_unread_notifications(int $userId): int
+{
+    $statement = pdo()->prepare(
+        'SELECT COUNT(*) FROM notifications WHERE user_id = :user_id AND is_read = 0'
+    );
+    $statement->execute(['user_id' => $userId]);
+    return (int) $statement->fetchColumn();
+}
+
+/**
+ * Mark a single notification as read. Ownership-scoped so a user cannot
+ * mark someone else's notifications.
+ */
+function mark_notification_read(int $notificationId, int $userId): bool
+{
+    $statement = pdo()->prepare(
+        'UPDATE notifications SET is_read = 1
+         WHERE id = :id AND user_id = :user_id'
+    );
+    $statement->execute([
+        'id'      => $notificationId,
+        'user_id' => $userId,
+    ]);
+    return $statement->rowCount() > 0;
+}
+
+/**
+ * Delete a single notification. Ownership-scoped.
+ */
+function delete_notification(int $notificationId, int $userId): bool
+{
+    $statement = pdo()->prepare(
+        'DELETE FROM notifications
+         WHERE id = :id AND user_id = :user_id'
+    );
+    $statement->execute([
+        'id'      => $notificationId,
+        'user_id' => $userId,
+    ]);
+    return $statement->rowCount() > 0;
+}
+
+/**
+ * Delete all read notifications for a given user.
+ */
+function delete_read_notifications(int $userId): int
+{
+    $statement = pdo()->prepare(
+        'DELETE FROM notifications WHERE user_id = :user_id AND is_read = 1'
+    );
+    $statement->execute(['user_id' => $userId]);
+    return (int) $statement->rowCount();
+}
+
+/**
+ * Insert a notification for every admin user. Useful for system events like
+ * "new user registered" that any admin should be informed of.
+ */
+function notify_all_admins(string $message): int
+{
+    $admins = pdo()
+        ->query("SELECT id FROM users WHERE role = 'admin'")
+        ->fetchAll(PDO::FETCH_COLUMN);
+
+    $count = 0;
+    foreach ($admins as $adminId) {
+        create_notification((int) $adminId, $message);
+        $count++;
+    }
+    return $count;
+}
+
+/**
  * API helper: emit a JSON response with the given HTTP status code and exit.
  * Always sets Content-Type: application/json so browsers and Postman render
  * the payload correctly. Called by every endpoint under /api/.
