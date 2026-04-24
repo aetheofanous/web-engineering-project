@@ -1,3 +1,45 @@
+/* --- Banner row flex layout --- */
+
+.banner-row-flex .eyebrow {
+    margin: 0;
+}
+/* --- Custom header positioning for Admin Module --- */
+.page-banner {
+    position: relative;
+}
+
+.button-link {
+    display: inline-flex;
+    align-items: center;
+}
+.auth-card:hover {
+    box-shadow: 0 22px 50px rgba(15, 42, 66, 0.12);
+}
+button {
+    cursor: pointer;
+}
+.table-button:hover {
+    background: #f3f6fa;
+}
+.primary-button,
+.table-button,
+.button-link.secondary {
+    transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
+}
+.primary-button {
+    padding: 10px 16px;
+    font-size: 0.92rem;
+    border-radius: 6px;
+    background: var(--primary);
+    border: 1px solid var(--primary);
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+}
+.eyebrow {
+    margin: 0;
+}
+
 :root {
     --bg: #eef3f8;
     --surface: #ffffff;
@@ -14,6 +56,56 @@
     --success-bg: #eef8f0;
     --success-border: #3e8a55;
     --shadow: 0 18px 40px rgba(15, 42, 66, 0.10);
+}
+
+.status-badge.admin:hover {
+    background: #d0e4f5;
+}
+
+.status-badge.candidate:hover {
+    background: #dff1e4;
+}
+
+
+/* status badge styles */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+    transition: all 0.2s ease;
+    cursor: default;
+}
+
+.status-badge.admin {
+    background: #e3f0fb;
+    color: #005b96;
+}
+
+.status-badge.candidate {
+    background: #eef8f0;
+    color: #3e8a55;
+}
+
+/* message styles */
+.message {
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+}
+
+.message.success {
+    background: var(--success-bg);
+    border: 1px solid var(--success-border);
+    color: #2d6a3f;
+}
+
+.message.error {
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    color: #a83232;
 }
 
 * {
@@ -42,34 +134,42 @@ body {
     border: 1px solid var(--border);
     border-radius: 6px;
     box-shadow: var(--shadow);
+    overflow: hidden;
 }
-
 .page-banner {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: stretch;  
+    gap: 6px;
     padding: 22px 28px;
     border-bottom: 1px solid var(--border);
+    position: relative;
 }
+
 
 .auth-title {
     margin: 0;
     font-size: 2rem;
 }
 
-.page-body {
-    padding: 24px 28px;
+.banner-row-flex {
+    display: flex;
+    align-items: center;
 }
 
-/* buttons */
+.banner-row-flex .eyebrow {
+    margin: 0;
+}
 
-.primary-button {
-    margin-bottom: 18px;
-    padding: 10px 16px;
-    font-size: 0.92rem;
-    border-radius: 6px;
-    background: var(--primary);
-    border: 1px solid var(--primary);
-    color: #fff;
-    cursor: pointer;
-    font-weight: 600;
+.eyebrow {
+    margin: 0;
+}
+
+.header-back-link {
+    margin-left: auto !important;
+    display: inline-block;
+    white-space: nowrap;
 }
 
 .primary-button:hover {
@@ -80,6 +180,7 @@ body {
     background: #fff;
     border: 1px solid var(--border-strong);
     color: var(--primary);
+    cursor: pointer;
 }
 
 .button-link.secondary:hover {
@@ -126,7 +227,7 @@ tbody tr:nth-child(even) {
 }
 
 tbody tr:hover {
-    background: #eef5fb;
+    background: rgba(0, 91, 150, 0.05);
 }
 
 /* actions */
@@ -138,6 +239,7 @@ tbody tr:hover {
 }
 
 .table-button {
+    background: transparent;
     padding: 5px 9px;
     font-size: 0.78rem;
     border-radius: 5px;
@@ -146,15 +248,6 @@ tbody tr:hover {
     font-weight: 600;
 }
 
-.table-button.edit {
-    background: transparent;
-    border: 1px solid var(--border-strong);
-    color: var(--primary);
-}
-
-.table-button.edit:hover {
-    background: var(--primary-soft);
-}
 
 .table-button.danger {
     background: transparent;
@@ -199,16 +292,7 @@ tbody tr:hover {
     animation: modalFade 0.2s ease;
 }
 
-@keyframes modalFade {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+
 
 .modal-actions {
     display: flex;
@@ -227,6 +311,10 @@ tbody tr:hover {
     border: none;
     background: #f3f6fa;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
 }
 
 .close:hover {
@@ -247,9 +335,11 @@ input, select {
     margin-top: 6px;
     border: 1px solid var(--border-strong);
     border-radius: 6px;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
 input:focus, select:focus {
     outline: none;
     border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(0, 91, 150, 0.15);
 }

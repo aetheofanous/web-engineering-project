@@ -67,8 +67,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $role = trim($_POST['role'] ?? '');
         $password = $_POST['password'] ?? '';
 
+
         if ($userId <= 0 || $username === '' || $email === '' || $role === '') {
             $errors[] = 'Τα στοιχεία ενημέρωσης χρήστη δεν είναι πλήρη.';
+        } else {
+            // Extra safety: check if user exists
+            $stmt = $pdo->prepare('SELECT id FROM users WHERE id = :id');
+            $stmt->execute(['id' => $userId]);
+            if (!$stmt->fetch()) {
+                $errors[] = 'Ο χρήστης δεν βρέθηκε.';
+            }
         }
 
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -158,11 +166,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-if (isset($_GET['edit'])) {
-    $stmt = $pdo->prepare('SELECT * FROM users WHERE id = :id LIMIT 1');
-    $stmt->execute(['id' => (int) $_GET['edit']]);
-    $editUser = $stmt->fetch();
-}
 
 $users = $pdo->query(
     'SELECT id, username, email, role, created_at
@@ -191,7 +194,12 @@ $messages = array_merge(
     <div class="auth-container">
         <div class="auth-card">
             <div class="page-banner">
-                <p class="eyebrow">Admin Module</p>
+                <div class="banner-row-flex">
+                    <span class="eyebrow">Admin Module</span>
+                    <a class="button-link secondary header-back-link" href="dashboard.php">
+                        Επιστροφή στο Admin Dashboard
+                    </a>
+                </div>
                 <h1 class="auth-title">Manage Users</h1>
                 <p class="auth-subtitle">Ο διαχειριστής μπορεί να βλέπει όλους τους εγγεγραμμένους χρήστες και να εκτελεί πλήρες CRUD στις εγγραφές τους.</p>
             </div>
@@ -225,11 +233,15 @@ $messages = array_merge(
                                         <td><?php echo h($user['id']); ?></td>
                                         <td><?php echo h($user['username']); ?></td>
                                         <td><?php echo h($user['email']); ?></td>
-                                        <td><span class="status-badge"><?php echo h($user['role']); ?></span></td>
+                                        <td><span class="status-badge <?php echo h($user['role']); ?>"><?php echo h($user['role']); ?></span></td>
                                         <td><?php echo h($user['created_at']); ?></td>
                                         <td>
                                             <div class="table-actions">
-                                                <a class="button-link table-button secondary" href="manage_users.php?edit=<?php echo h($user['id']); ?>">Edit</a>
+                                                <button 
+                                                    class="button-link table-button secondary"
+                                                    onclick='openEditModal(<?php echo $user["id"]; ?>, <?php echo json_encode($user["username"]); ?>, <?php echo json_encode($user["email"]); ?>, <?php echo json_encode($user["role"]); ?>)'>
+                                                    Edit
+                                                </button>
                                                 <button type="button" class="table-button danger"
                                                     onclick="openDeleteModal(<?php echo $user['id']; ?>)">
                                                     Delete
@@ -265,91 +277,111 @@ $messages = array_merge(
                             <label for="password">Password</label>
                             <input type="password" name="password" id="password" required>
 
-                            <button type="submit">Create User</button>
+                            <button type="submit" class="primary-button">Create User</button>
                         </form>
                     </section>
 
-                    <section class="panel-section">
-                        <h2 class="section-title">Update User</h2>
-                        <?php if (!$editUser): ?>
-                            <p class="empty-state">Επιλέξτε κάποιον χρήστη από τον πίνακα για επεξεργασία.</p>
-                        <?php else: ?>
-                            <form method="post" action="">
-                                <input type="hidden" name="action" value="update_user">
-                                <input type="hidden" name="user_id" value="<?php echo h($editUser['id']); ?>">
-
-                                <label for="edit_username">Username</label>
-                                <input type="text" name="username" id="edit_username" value="<?php echo h($editUser['username']); ?>" required>
-
-                                <label for="edit_email">Email</label>
-                                <input type="email" name="email" id="edit_email" value="<?php echo h($editUser['email']); ?>" required>
-
-                                <label for="edit_role">Role</label>
-                                <select name="role" id="edit_role" required>
-                                    <option value="candidate" <?php echo $editUser['role'] === 'candidate' ? 'selected' : ''; ?>>candidate</option>
-                                    <option value="admin" <?php echo $editUser['role'] === 'admin' ? 'selected' : ''; ?>>admin</option>
-                                </select>
-
-                                <label for="edit_password">New Password</label>
-                                <input type="password" name="password" id="edit_password" placeholder="Αφήστε κενό για διατήρηση">
-
-                                <button type="submit">Save Changes</button>
-                                <a class="button-link secondary" href="manage_users.php">Cancel</a>
-                            </form>
-                        <?php endif; ?>
-                    </section>
+                    <!-- Update User section removed: editing now handled by modal -->
                 </div>
 
-                <div class="page-actions">
-                    <a class="button-link secondary" href="dashboard.php">Επιστροφή στο Admin Dashboard</a>
-                </div>
+                <!-- page-actions removed: button now in banner -->
             </div>
         </div>
     </div>
+
     <div id="deleteModal" class="modal">
-    <div class="modal-content">
-
-        <button class="close" onclick="closeDeleteModal()">×</button>
-
-        <h3 class="section-title">Delete User</h3>
-        <p class="section-text">
-        Είσαι σίγουρος ότι θέλεις να διαγράψεις αυτόν τον χρήστη;
-        </p>
-
-        <form method="post">
-            <input type="hidden" name="action" value="delete_user">
-            <input type="hidden" name="user_id" id="deleteUserId">
-
-            <div class="modal-actions">
-                <button type="submit" class="table-button danger">Delete</button>
-                <button type="button" class="button-link secondary" onclick="closeDeleteModal()">Cancel</button>
-            </div>
-        </form>
-
+        <div class="modal-content">
+            <button class="close" onclick="closeDeleteModal()">×</button>
+            <h3 class="section-title">Delete User</h3>
+            <p class="section-text">
+                Είσαι σίγουρος ότι θέλεις να διαγράψεις αυτόν τον χρήστη;
+            </p>
+            <form method="post">
+                <input type="hidden" name="action" value="delete_user">
+                <input type="hidden" name="user_id" id="deleteUserId">
+                <div class="modal-actions">
+                    <button type="submit" class="table-button danger">Delete</button>
+                    <button type="button" class="button-link secondary" onclick="closeDeleteModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
-<script>
-function openDeleteModal(id) {
-    document.getElementById("deleteUserId").value = id;
-    document.getElementById("deleteModal").classList.add("show");
-}
 
-function closeDeleteModal() {
-    document.getElementById("deleteModal").classList.remove("show");
-    document.getElementById("deleteUserId").value = "";
-}
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <button class="close" onclick="closeEditModal()">×</button>
+            <h3 class="section-title">Edit User</h3>
+            <form method="post">
+                <input type="hidden" name="action" value="update_user">
+                <input type="hidden" name="user_id" id="editUserId">
 
-window.onclick = function(e) {
-    if (e.target.classList.contains("modal")) {
-        closeDeleteModal();
-    }
-}
+                <label>Username</label>
+                <input type="text" name="username" id="edit_username" required>
 
-document.addEventListener("keydown", function(e) {
-    if (e.key === "Escape") {
-        closeDeleteModal();
-    }
-});
-</script>
+                <label>Email</label>
+                <input type="email" name="email" id="edit_email" required>
+
+                <label>Role</label>
+                <select name="role" id="edit_role">
+                    <option value="candidate">candidate</option>
+                    <option value="admin">admin</option>
+                </select>
+
+                <label>New Password</label>
+                <input type="password" name="password" placeholder="Αφήστε κενό για διατήρηση">
+
+                <div class="modal-actions">
+                    <button type="submit" class="primary-button">Save Changes</button>
+                    <button type="button" class="button-link secondary" onclick="closeEditModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openDeleteModal(id) {
+            document.getElementById("deleteUserId").value = id;
+            document.getElementById("deleteModal").classList.add("show");
+        }
+
+        function closeDeleteModal() {
+            document.getElementById("deleteModal").classList.remove("show");
+            document.getElementById("deleteUserId").value = "";
+        }
+
+        function openEditModal(id, username, email, role) {
+            console.log("clicked", id, username, email, role);
+            document.getElementById("editUserId").value = id;
+            document.getElementById("edit_username").value = username;
+            document.getElementById("edit_email").value = email;
+            const roleSelect = document.getElementById("edit_role");
+            if (roleSelect.querySelector(`option[value="${role}"]`)) {
+                roleSelect.value = role;
+            }
+            document.getElementById("editModal").classList.add("show");
+        }
+
+        function closeEditModal() {
+            document.getElementById("editModal").classList.remove("show");
+            document.getElementById("editUserId").value = "";
+            document.getElementById("edit_username").value = "";
+            document.getElementById("edit_email").value = "";
+            document.getElementById("edit_role").value = "candidate";
+        }
+
+        window.onclick = function(e) {
+            if (e.target.classList.contains("modal")) {
+                closeDeleteModal();
+                closeEditModal();
+            }
+        }
+
+        document.addEventListener("keydown", function(e) {
+            if (e.key === "Escape") {
+                closeDeleteModal();
+                closeEditModal();
+            }
+        });
+    </script>
 </body>
 </html>
