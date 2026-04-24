@@ -557,6 +557,15 @@ textarea {
 .button-link {
     display: inline-flex;
     align-items: center;
+    padding: 10px 20px;
+    border-radius: 8px;
+    background: var(--primary);
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 91, 150, 0.15);
 }
 .auth-card:hover {
     box-shadow: 0 22px 50px rgba(15, 42, 66, 0.12);
@@ -733,6 +742,12 @@ body {
 
 .button-link.secondary:hover {
     background: var(--primary-soft);
+}
+
+.button-link:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 91, 150, 0.2);
 }
 
 /* table */
@@ -1269,4 +1284,30 @@ input:focus, select:focus {
         width: calc(100vw - 24px);
         right: -6px;
     }
+}
+
+/* Modern Section Styles */
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #173650;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.section-text {
+    color: #5d7183;
+    line-height: 1.7;
+    font-size: 1rem;
+    max-width: 65ch;
+    margin-bottom: 1.5rem;
+}
+
+.about-text {
+    color: #6b7682;
+    line-height: 1.8;
+    font-size: 0.95rem;
+    max-width: 70ch;
+    margin-bottom: 1rem;
+    text-align: justify;
 }
