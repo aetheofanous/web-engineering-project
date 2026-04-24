@@ -1,25 +1,25 @@
-﻿<?php
-// PDO database connection
+<?php
+// Shared PDO connection. Errors are logged server-side and never exposed with credentials.
 
 $host = 'localhost';
-$db   = 'appointable_lists';
+$databaseName = 'appointable_lists';
 $user = 'root';
-$pass = '';
+$password = '';
 $charset = 'utf8mb4';
 
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$dsn = "mysql:host={$host};dbname={$databaseName};charset={$charset}";
 $options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
+    PDO::ATTR_EMULATE_PREPARES => false,
 ];
 
 try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (PDOException $e) {
-    // Never expose sensitive DB errors to users
-    error_log('DB connection failed: ' . $e->getMessage());
-    die('Database connection failed. Please try again later.');
+    $pdo = new PDO($dsn, $user, $password, $options);
+} catch (PDOException $exception) {
+    error_log('Database connection failed: ' . $exception->getMessage());
+    http_response_code(500);
+    exit('Database connection failed. Please try again later.');
 }
 
 return $pdo;
