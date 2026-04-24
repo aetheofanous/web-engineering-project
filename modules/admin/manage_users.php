@@ -228,8 +228,11 @@ $sql = 'SELECT id, name, surname, email, phone, role, created_at FROM users WHER
 $params = [];
 
 if ($keyword !== '') {
-    $sql .= ' AND (name LIKE :kw OR surname LIKE :kw OR email LIKE :kw)';
-    $params['kw'] = '%' . $keyword . '%';
+    $sql .= ' AND (name LIKE :kw_name OR surname LIKE :kw_surname OR email LIKE :kw_email)';
+    $prefixPattern = $keyword . '%';
+    $params['kw_name'] = $prefixPattern;
+    $params['kw_surname'] = $prefixPattern;
+    $params['kw_email'] = $prefixPattern;
 }
 
 if ($roleFilter !== '' && in_array($roleFilter, ['admin', 'candidate'], true)) {
