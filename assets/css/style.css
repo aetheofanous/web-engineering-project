@@ -711,16 +711,23 @@ body {
 .banner-row-flex {
     display: flex;
     align-items: center;
-    margin-bottom: 6px;
+    justify-content: space-between;
+    margin-bottom: 12px;
 }
 
 
 .eyebrow {
     margin: 0;
+    order: 2;
+}
+
+.page-banner > .eyebrow {
+    order: -1;
 }
 
 .header-back-link {
-    margin-left: auto !important;
+    order: 1;
+    margin-left: 0 !important;
     display: inline-block;
     white-space: nowrap;
 }
@@ -1310,4 +1317,252 @@ input:focus, select:focus {
     max-width: 70ch;
     margin-bottom: 1rem;
     text-align: justify;
+}
+
+.page-body {
+    padding-top: 32px;
+    padding-bottom: 36px;
+}
+
+.section-divider {
+    margin: 36px 0 24px;
+    border-top: 1px solid rgba(15, 42, 66, 0.08);
+}
+
+.page-body > .section-divider + .section-title + .section-text {
+    max-width: min(100%, 1080px);
+    width: 100%;
+    color: #5f6f82;
+    line-height: 1.85;
+    font-size: 1rem;
+    background: rgba(243, 246, 250, 0.95);
+    border: 1px solid rgba(95, 110, 129, 0.12);
+    border-radius: 18px;
+    padding: 28px 32px;
+    box-shadow: 0 18px 40px rgba(15, 42, 66, 0.05);
+    margin-bottom: 0;
+}
+
+.page-body > .section-divider + .section-title + .section-text a {
+    color: #005b96;
+    text-decoration: underline;
+}
+
+/* Login page layout refinement */
+.auth-card.narrow {
+    max-width: 850px !important;
+    margin: 0 auto !important;
+    border-radius: 22px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(0, 91, 150, 0.12) !important;
+    box-shadow: 0 28px 70px rgba(15, 42, 66, 0.08) !important;
+}
+
+.auth-card.narrow .page-banner {
+    padding: 26px 30px 24px !important;
+    background: rgba(240, 247, 255, 0.95) !important;
+    border-bottom: 1px solid rgba(0, 91, 150, 0.08) !important;
+}
+
+.auth-card.narrow .page-body {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 28px 30px 34px !important;
+}
+
+.auth-card.narrow .section-card,
+.auth-card.narrow .section-card-compact {
+    width: 100% !important;
+    max-width: 760px !important;
+    padding: 24px !important;
+    box-shadow: none !important;
+    border: 1px solid rgba(0, 91, 150, 0.08) !important;
+    background: #ffffff !important;
+}
+
+.auth-card.narrow .form-row {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 18px !important;
+    width: 100% !important;
+}
+
+.auth-card.narrow .form-group {
+    width: 100% !important;
+}
+
+.auth-card.narrow .form-input {
+    width: 100% !important;
+    padding: 14px 16px !important;
+    border: 1px solid rgba(0, 91, 150, 0.16) !important;
+    border-radius: 14px !important;
+    background: #f8fbff !important;
+}
+
+.auth-card.narrow .form-input:focus {
+    border-color: #005b96 !important;
+    box-shadow: 0 0 0 4px rgba(0, 91, 150, 0.12) !important;
+}
+
+@media (max-width: 720px) {
+    .auth-card.narrow .form-row {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.auth-footer {
+    margin-top: 24px !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 10px !important;
+    color: #5d7183 !important;
+    font-size: 0.95rem !important;
+    line-height: 1.6 !important;
+}
+
+.auth-footer a {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px 14px !important;
+    border-radius: 999px !important;
+    background: rgba(0, 91, 150, 0.08) !important;
+    color: #005b96 !important;
+    border: 1px solid rgba(0, 91, 150, 0.18) !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+    transition: transform 0.22s ease, background 0.22s ease, box-shadow 0.22s ease !important;
+}
+
+.auth-footer a:hover {
+    transform: translateY(-1px) !important;
+    background: rgba(0, 91, 150, 0.12) !important;
+    box-shadow: 0 10px 22px rgba(0, 91, 150, 0.12) !important;
+}
+
+.auth-footer a:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 6px 14px rgba(0, 91, 150, 0.1) !important;
+}
+
+.api-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 22px;
+    margin-top: 20px;
+}
+
+.api-card {
+    background: #ffffff;
+    border: 1px solid rgba(0, 91, 150, 0.12);
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow: 0 14px 36px rgba(15, 42, 66, 0.08);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    will-change: transform, box-shadow;
+}
+
+.api-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 28px 70px rgba(15, 42, 66, 0.14);
+    border-color: rgba(0, 91, 150, 0.18);
+}
+
+.code-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.clipboard-button {
+    padding: 8px 14px;
+    font-size: 0.88rem;
+}
+
+.endpoint-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #ffffff;
+    margin-right: 10px;
+}
+
+.endpoint-badge-get {
+    background: #3b82f6;
+}
+
+.endpoint-badge-post {
+    background: #10b981;
+}
+
+.endpoint-badge-put {
+    background: #f59e0b;
+}
+
+.endpoint-badge-delete {
+    background: #ef4444;
+}
+
+.api-card h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.05rem;
+    color: #12314b;
+}
+
+.api-card p {
+    margin: 0 0 14px;
+    color: #5d7183;
+    line-height: 1.7;
+}
+
+.api-card code {
+    display: block;
+    width: 100%;
+    padding: 14px 16px;
+    background: #f4f7fd;
+    border-radius: 12px;
+    color: #0f4f7a;
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+    font-size: 0.95rem;
+}
+
+.api-card code::-webkit-scrollbar {
+    height: 6px;
+}
+
+.api-card code::-webkit-scrollbar-thumb {
+    background: rgba(0, 91, 150, 0.2);
+    border-radius: 10px;
+}
+
+.code-block {
+    display: block;
+    width: 100%;
+    padding: 14px 16px;
+    background: #f4f7fd;
+    border-radius: 12px;
+    color: #0f4f7a;
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+    font-size: 0.95rem;
+}
+
+.section-card h2.section-title,
+.section-card .section-header .section-title {
+    margin-bottom: 10px;
+}
+
+.auth-container {
+    padding-bottom: 40px !important;
 }

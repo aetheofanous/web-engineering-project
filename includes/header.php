@@ -8,6 +8,7 @@ $pageSubtitle = $pageSubtitle ?? app_config('tagline');
 $moduleKey = $moduleKey ?? null;
 $pageKey = $pageKey ?? null;
 $showHero = $showHero ?? true;
+$showTopbar = $showTopbar ?? true;
 $showModuleNav = $showModuleNav ?? ($moduleKey !== null);
 $heroStats = $heroStats ?? [];
 $bodyClass = $bodyClass ?? '';
@@ -23,6 +24,7 @@ $flashes = get_flashes();
     <link rel="stylesheet" href="<?php echo e(base_url('assets/css/style.css')); ?>">
 </head>
 <body class="<?php echo e($bodyClass); ?>">
+    <?php if ($showTopbar): ?>
     <header class="site-topbar">
         <div class="site-topbar__inner">
             <a class="brand-lockup" href="<?php echo e(base_url()); ?>">
@@ -47,6 +49,7 @@ $flashes = get_flashes();
             </div>
         </div>
     </header>
+    <?php endif; ?>
 
     <?php if ($showModuleNav): ?>
         <?php require __DIR__ . '/nav.php'; ?>
