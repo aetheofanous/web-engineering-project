@@ -1,3 +1,12 @@
+# Team Names
+
+- Sophia Kyriacou 30288
+- Antriani Theofanous 30570
+- Christiana Stylianou 30356
+- Pelagia Koniotaki 31511
+- Sophia Kyriacou 30288
+- Panteleimoni Alexandrou 30402
+
 # Appointable Lists
 
 PHP/PDO web application for monitoring appointment lists of candidates, inspired by the public structure of the Educational Service Commission portal.
