@@ -1,16 +1,10 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/functions.php';
 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ../auth/login.php');
-    exit;
-}
+require_login('../auth/login.php');
 
-function h($value) {
-    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-}
-
-$pdo = require_once __DIR__ . '/../includes/db.php';
+$pdo = require __DIR__ . '/../includes/db.php';
+ensure_specialty_management_schema($pdo);
 
 $keyword = trim($_GET['keyword'] ?? '');
 $params = [];
@@ -18,10 +12,11 @@ $params = [];
 $sql = "SELECT c.id, c.name, c.surname, c.birth_year, c.position, c.points, l.year, s.name AS specialty
         FROM candidates c
         JOIN lists l ON c.list_id = l.id
-        JOIN specialties s ON c.specialty_id = s.id";
+        JOIN specialties s ON c.specialty_id = s.id
+        WHERE COALESCE(s.is_active, 1) = 1";
 
 if ($keyword !== '') {
-    $sql .= " WHERE c.name LIKE :kw_name OR c.surname LIKE :kw_surname OR s.name LIKE :kw_specialty";
+    $sql .= " AND (c.name LIKE :kw_name OR c.surname LIKE :kw_surname OR s.name LIKE :kw_specialty)";
     $params['kw_name'] = '%' . $keyword . '%';
     $params['kw_surname'] = '%' . $keyword . '%';
     $params['kw_specialty'] = '%' . $keyword . '%';

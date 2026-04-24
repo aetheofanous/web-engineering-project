@@ -8,11 +8,11 @@ DELETE FROM lists;
 DELETE FROM specialties;
 DELETE FROM users;
 
-INSERT INTO specialties (id, name, description) VALUES
-  (1, 'Mathematics', 'Mathematics educators and related specialties'),
-  (2, 'Physics', 'Physics educators and related specialties'),
-  (3, 'Informatics', 'Computer science educators and related specialties'),
-  (4, 'Chemistry', 'Chemistry educators and related specialties');
+INSERT INTO specialties (id, name, description, is_active) VALUES
+  (1, 'Mathematics', 'Mathematics educators and related specialties', 1),
+  (2, 'Physics', 'Physics educators and related specialties', 1),
+  (3, 'Informatics', 'Computer science educators and related specialties', 1),
+  (4, 'Chemistry', 'Chemistry educators and related specialties', 1);
 
 INSERT INTO lists (id, specialty_id, year) VALUES
   (1, 1, 2024),

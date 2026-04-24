@@ -1,13 +1,14 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/functions.php';
 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ../auth/login.php');
-    exit;
-}
+require_login('../auth/login.php');
 
 $username = $_SESSION['username'] ?? 'User';
 $role = $_SESSION['role'] ?? 'candidate';
+
+if ($role === 'admin') {
+    redirect_to('admin/dashboard.php');
+}
 ?>
 <!DOCTYPE html>
 <html lang="el">
