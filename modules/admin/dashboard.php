@@ -120,23 +120,26 @@ $username = $_SESSION['username'] ?? 'Admin';
             </div>
 
             <div class="page-body">
-                <div class="info-grid">
-                    <section class="info-box">
-                        <h2>Εγγεγραμμένοι Χρήστες</h2>
-                        <p class="section-text"><strong><?php echo h($stats['users']); ?></strong> συνολικά προφίλ.</p>
-                    </section>
-                    <section class="info-box">
-                        <h2>Διαθέσιμοι Πίνακες</h2>
-                        <p class="section-text"><strong><?php echo h($stats['lists']); ?></strong> πίνακες καταχωρημένοι.</p>
-                    </section>
-                    <section class="info-box">
-                        <h2>Υποψήφιοι</h2>
-                        <p class="section-text"><strong><?php echo h($stats['candidates']); ?></strong> εγγραφές υποψηφίων.</p>
-                    </section>
-                    <section class="info-box">
-                        <h2>Ενεργές Ειδικότητες</h2>
-                        <p class="section-text"><strong><?php echo h($stats['active_specialties']); ?></strong> ειδικότητες σε χρήση.</p>
-                    </section>
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <h3>5</h3>
+                        <p>Χρήστες</p>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3>4</h3>
+                        <p>Πίνακες</p>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3>5</h3>
+                        <p>Υποψήφιοι</p>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3>4</h3>
+                        <p>Ειδικότητες</p>
+                    </div>
                 </div>
 
                 <div class="section-divider"></div>
