@@ -1,10 +1,39 @@
 <?php
 
+
 function start_app_session() {
     if (session_status() !== PHP_SESSION_ACTIVE) {
         session_start();
     }
 }
+
+/**
+ * Alias for start_app_session() - used by bootstrap.php
+ */
+
+function ensure_session_started() {
+    start_app_session();
+}
+
+/**
+ * Logout user - destroy session completely
+ */
+function logout_user() {
+    start_app_session();
+    // Unset all session variables
+    $_SESSION = array();
+    // Delete the session cookie
+    if (ini_get("session.use_cookies")) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000,
+            $params["path"], $params["domain"],
+            $params["secure"], $params["httponly"]
+        );
+    }
+    // Destroy the session
+    session_destroy();
+}
+
 
 function h($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
@@ -76,11 +105,22 @@ function require_login($loginPath = '../auth/login.php') {
     }
 }
 
+
 function require_admin_role($fallbackPath = '../dashboard.php', $loginPath = '../auth/login.php') {
     require_login($loginPath);
 
     if (($_SESSION['role'] ?? '') !== 'admin') {
         redirect_to($fallbackPath);
+    }
+}
+
+/**
+ * Require guest (not logged in) - redirect to dashboard if user is already authenticated
+ */
+function require_guest($redirectPath = '../dashboard.php') {
+    start_app_session();
+    if (isset($_SESSION['user_id'])) {
+        redirect_to($redirectPath);
     }
 }
 
