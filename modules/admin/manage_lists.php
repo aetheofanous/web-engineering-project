@@ -237,11 +237,40 @@ $messages = array_merge(
     <title>Manage Lists</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
-<body>
-    <div class="auth-container">
+<script>
+    // Delete List Modal functions
+    function openDeleteListModal(listId) {
+        document.getElementById("deleteListId").value = listId;
+        document.getElementById("deleteListModal").classList.add("show");
+    }
+
+    function closeDeleteListModal() {
+        document.getElementById("deleteListModal").classList.remove("show");
+        document.getElementById("deleteListId").value = "";
+    }
+
+    // Close modals when clicking outside
+    window.onclick = function(e) {
+        if (e.target.classList.contains("modal")) {
+            closeDeleteListModal();
+        }
+    }
+
+    document.addEventListener("keydown", function(e) {
+        if (e.key === "Escape") {
+            closeDeleteListModal();
+        }
+    });
+</script>
+</body>
         <div class="auth-card">
             <div class="page-banner">
-                <p class="eyebrow">Admin Module</p>
+                <div class="banner-row-flex">
+                    <p class="eyebrow">Admin Module</p>
+                    <a class="button-link secondary header-back-link" href="dashboard.php">
+                        ← Επιστροφή στο Dashboard
+                    </a>
+                </div>
                 <h1 class="auth-title">Manage Lists</h1>
                 <p class="auth-subtitle">Επιλέξτε τις ειδικότητες που θα είναι ενεργές και φορτώστε νέους πίνακες με δεδομένα υποψηφίων μέσω CSV, TSV ή επικόλλησης από εξωτερική πηγή.</p>
             </div>
@@ -251,51 +280,71 @@ $messages = array_merge(
                     <div class="message <?php echo h($message['type']); ?>"><?php echo h($message['message']); ?></div>
                 <?php endforeach; ?>
 
+
                 <div class="split-grid">
-                    <section class="panel-section">
+                    <div class="section-card section-card-compact">
                         <h2 class="section-title">Ενεργές Ειδικότητες</h2>
                         <form method="post" action="">
                             <input type="hidden" name="action" value="save_specialties">
-
-                            <div class="checkbox-grid">
+                            <?php 
+                            $activeCount = count(array_filter($specialties, function($s) { return $s['is_active']; }));
+                            ?>
+                            <p class="active-counter"><strong><?php echo $activeCount; ?></strong> από <strong><?php echo count($specialties); ?></strong> ειδικότητες ενεργές</p>
+                            <div class="specialties-compact-grid">
                                 <?php foreach ($specialties as $specialty): ?>
-                                    <label class="checkbox-card">
-                                        <input
-                                            type="checkbox"
-                                            name="active_specialties[]"
-                                            value="<?php echo h($specialty['id']); ?>"
-                                            <?php echo (int) $specialty['is_active'] === 1 ? 'checked' : ''; ?>
-                                        >
-                                        <span>
-                                            <strong><?php echo h($specialty['name']); ?></strong><br>
-                                            <?php echo h($specialty['description'] ?: 'Χωρίς περιγραφή'); ?>
-                                        </span>
-                                    </label>
+                                    <div class="specialty-compact-card">
+                                        <input type="checkbox" name="active_specialties[]" value="<?php echo h($specialty['id']); ?>" id="spec_<?php echo h($specialty['id']); ?>" <?php echo (int) $specialty['is_active'] === 1 ? 'checked' : ''; ?>>
+                                        <div class="specialty-info">
+                                            <label for="spec_<?php echo h($specialty['id']); ?>" class="specialty-label-row">
+                                                <span class="specialty-name"><?php echo h($specialty['name']); ?></span>
+                                                <span class="spec-status-badge <?php echo $specialty['is_active'] ? 'active' : 'inactive'; ?>">
+                                                    <?php echo $specialty['is_active'] ? '✓' : '✗'; ?>
+                                                </span>
+                                            </label>
+                                            <span class="specialty-desc">
+                                                <?php echo h($specialty['description'] ?: 'Χωρίς περιγραφή'); ?>
+                                            </span>
+                                        </div>
+                                    </div>
                                 <?php endforeach; ?>
                             </div>
-
-                            <button type="submit">Αποθήκευση Επιλογών</button>
+                            <button type="submit" class="primary-button">Αποθήκευση Επιλογών</button>
                         </form>
-                    </section>
+                    </div>
 
-                    <section class="panel-section">
+                    <div class="section-card section-card-compact">
                         <h2 class="section-title">Προσθήκη Ειδικότητας</h2>
-                        <form method="post" action="">
+                        
+                        <form method="post" action="" class="add-specialty-form">
                             <input type="hidden" name="action" value="add_specialty">
-
-                            <label for="name">Όνομα</label>
-                            <input type="text" name="name" id="name" placeholder="Enter specialty name" required>
-
-                            <label for="description">Περιγραφή</label>
-                            <input type="text" name="description" id="description" placeholder="Short specialty description">
-                            <p class="field-help">Μια σύντομη περιγραφή βοηθά στην καλύτερη οργάνωση των ειδικοτήτων.</p>
-
-                            <button type="submit">Προσθήκη Ειδικότητας</button>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="name">Όνομα Ειδικότητας</label>
+                                    <input type="text" name="name" id="name" class="form-input" 
+                                           placeholder="π.χ. Πληροφορική, Χημεία, Φυσική" required>
+                                    <span class="form-hint">Το όνομα είναι υποχρεωτικό.</span>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="description">Περιγραφή (προαιρετικό)</label>
+                                    <input type="text" name="description" id="description" class="form-input"
+                                           placeholder="Σύντομη περιγραφή της ειδικότητας">
+                                    <span class="form-hint">Μια σύντομη περιγραφή βοηθά στην καλύτερη οργάνωση.</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="primary-button">
+                                    <span class="btn-icon">+</span> Προσθήκη Ειδικότητας
+                                </button>
+                            </div>
                         </form>
-                    </section>
+                    </div>
                 </div>
 
-                <section class="panel-section">
+
+                <div class="section-card section-card-compact">
                     <h2 class="section-title">Φόρτωση Πίνακα</h2>
                     <p class="section-text">Αναμενόμενες στήλες ανά γραμμή: `name, surname, birth_year, position, points`. Μπορείτε να εισάγετε αρχείο CSV/TSV ή να επικολλήσετε δεδομένα που αντιγράψατε από τη σελίδα της Επιτροπής.</p>
 
@@ -336,11 +385,12 @@ $messages = array_merge(
                             </div>
                         </div>
 
-                        <button type="submit">Φόρτωση Πίνακα</button>
+                        <button type="submit" class="primary-button">Φόρτωση Πίνακα</button>
                     </form>
-                </section>
+                </div>
 
-                <section class="panel-section">
+
+                <div class="section-card section-card-compact">
                     <div class="section-header">
                         <h2 class="section-title">Υφιστάμενοι Πίνακες</h2>
                         <p class="section-text">Εμφάνιση όλων των πινάκων με πλήθος υποψηφίων ανά ειδικότητα και έτος.</p>
@@ -370,17 +420,13 @@ $messages = array_merge(
                                             <td><?php echo h($list['specialty_name']); ?></td>
                                             <td><?php echo h($list['year']); ?></td>
                                             <td>
-                                                <span class="status-badge">
+                                                <span class="status-badge <?php echo (int)$list['is_active'] === 1 ? 'admin' : 'candidate'; ?>">
                                                     <?php echo (int) $list['is_active'] === 1 ? 'active' : 'inactive'; ?>
                                                 </span>
                                             </td>
                                             <td><?php echo h($list['candidates_count']); ?></td>
-                                            <td>
-                                                <form method="post" action="" onsubmit="return confirm('Είσαι σίγουρος;');">
-                                                    <input type="hidden" name="action" value="delete_list">
-                                                    <input type="hidden" name="list_id" value="<?php echo h($list['id']); ?>">
-                                                    <button class="table-button danger" type="submit">Delete</button>
-                                                </form>
+                                            <td class="table-actions">
+                                                <button type="button" class="table-button danger" onclick="openDeleteListModal(<?php echo h($list['id']); ?>)">Delete</button>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -388,13 +434,53 @@ $messages = array_merge(
                             </tbody>
                         </table>
                     </div>
-                </section>
-
-                <div class="page-actions">
-                    <a class="button-link secondary" href="dashboard.php">Επιστροφή στο Admin Dashboard</a>
                 </div>
+
             </div>
+    </div> <!-- close auth-card -->
+    <!-- Delete List Modal -->
+    <div id="deleteListModal" class="modal">
+        <div class="modal-content">
+            <button class="close" onclick="closeDeleteListModal()">×</button>
+            <h3 class="section-title">Διαγραφή Πίνακα</h3>
+            <p class="section-text">
+                Είσαι σίγουρος ότι θέλεις να διαγράψεις αυτόν τον πίνακα;<br>
+                <strong>Οι υποψήφιοι θα διαγραφούν οριστικά.</strong>
+            </p>
+            <form method="post">
+                <input type="hidden" name="action" value="delete_list">
+                <input type="hidden" name="list_id" id="deleteListId">
+                <div class="modal-actions">
+                    <button type="submit" class="table-button danger">Delete</button>
+                    <button type="button" class="button-link secondary" onclick="closeDeleteListModal()">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
+    <script>
+        // Delete List Modal functions
+        function openDeleteListModal(listId) {
+            document.getElementById("deleteListId").value = listId;
+            document.getElementById("deleteListModal").classList.add("show");
+        }
+
+        function closeDeleteListModal() {
+            document.getElementById("deleteListModal").classList.remove("show");
+            document.getElementById("deleteListId").value = "";
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(e) {
+            if (e.target.classList.contains("modal")) {
+                closeDeleteListModal();
+            }
+        }
+
+        document.addEventListener("keydown", function(e) {
+            if (e.key === "Escape") {
+                closeDeleteListModal();
+            }
+        });
+    </script>
 </body>
 </html>
