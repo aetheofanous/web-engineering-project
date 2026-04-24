@@ -1,6 +1,9 @@
 <?php
+// Shared helpers used across every module (auth, flash messages, PDO bridge, etc.).
 
-
+/**
+ * Start the PHP session only once. Safe to call from every page.
+ */
 function start_app_session() {
     if (session_status() !== PHP_SESSION_ACTIVE) {
         session_start();
@@ -10,30 +13,76 @@ function start_app_session() {
 /**
  * Alias for start_app_session() - used by bootstrap.php
  */
-
 function ensure_session_started() {
     start_app_session();
 }
 
 /**
- * Logout user - destroy session completely
+ * Persist a logged in user into $_SESSION. Called by login and profile update.
+ *
+ * @param array $user Row from the users table (at least id, name, surname, email, role).
+ */
+function login_user(array $user): void
+{
+    start_app_session();
+
+    // Regenerate the session id on login to harden against session fixation.
+    session_regenerate_id(true);
+
+    $_SESSION['user_id']      = (int) ($user['id'] ?? 0);
+    $_SESSION['user_name']    = $user['name'] ?? '';
+    $_SESSION['user_surname'] = $user['surname'] ?? '';
+    $_SESSION['user_email']   = $user['email'] ?? '';
+    $_SESSION['user_role']    = $user['role'] ?? '';
+    $_SESSION['user_phone']   = $user['phone'] ?? null;
+
+    // Legacy keys kept so older pages (admin dashboard, manage_users) keep working.
+    $_SESSION['username'] = trim(($user['name'] ?? '') . ' ' . ($user['surname'] ?? ''));
+    $_SESSION['role']     = $user['role'] ?? '';
+}
+
+/**
+ * Logout helper. Removes user-identifying keys from the session so that any
+ * flash messages queued AFTER logout are still readable on the next request.
  */
 function logout_user() {
     start_app_session();
-    // Unset all session variables
-    $_SESSION = array();
-    // Delete the session cookie
-    if (ini_get("session.use_cookies")) {
-        $params = session_get_cookie_params();
-        setcookie(session_name(), '', time() - 42000,
-            $params["path"], $params["domain"],
-            $params["secure"], $params["httponly"]
-        );
+
+    // Clear only user-related keys so the session (and flash storage) survive.
+    $userKeys = [
+        'user_id', 'user_name', 'user_surname', 'user_email',
+        'user_role', 'user_phone', 'username', 'role',
+    ];
+    foreach ($userKeys as $key) {
+        unset($_SESSION[$key]);
     }
-    // Destroy the session
-    session_destroy();
+
+    // Rotate the session id to invalidate any tokens tied to the old login.
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_regenerate_id(true);
+    }
 }
 
+/**
+ * Return the logged in user reconstructed from session data, or null.
+ */
+function current_user(): ?array
+{
+    start_app_session();
+
+    if (empty($_SESSION['user_id'])) {
+        return null;
+    }
+
+    return [
+        'id'      => (int) $_SESSION['user_id'],
+        'name'    => $_SESSION['user_name']    ?? '',
+        'surname' => $_SESSION['user_surname'] ?? '',
+        'email'   => $_SESSION['user_email']   ?? '',
+        'role'    => $_SESSION['user_role']    ?? ($_SESSION['role'] ?? ''),
+        'phone'   => $_SESSION['user_phone']   ?? null,
+    ];
+}
 
 function h($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
@@ -55,6 +104,10 @@ function app_config(?string $key = null, $default = null)
     return $appConfig[$key] ?? $default;
 }
 
+/**
+ * Build a URL relative to the project root, ignoring any "../" prefixes the
+ * caller might pass so redirect_to() always lands on a valid absolute URL.
+ */
 function base_url(string $path = ''): string
 {
     static $base = null;
@@ -71,7 +124,15 @@ function base_url(string $path = ''): string
         }
     }
 
+    // Normalise the path: drop leading ./ or ../ segments that would otherwise
+    // break base_url() when callers pass script-relative paths.
     $path = ltrim($path, '/');
+    while (strpos($path, '../') === 0) {
+        $path = substr($path, 3);
+    }
+    if (strpos($path, './') === 0) {
+        $path = substr($path, 2);
+    }
 
     if ($path === '') {
         return $base === '' ? '/' : $base . '/';
@@ -97,30 +158,74 @@ function pdo(): PDO
     return $pdo;
 }
 
-function require_login($loginPath = '../auth/login.php') {
-    start_app_session();
-
-    if (!isset($_SESSION['user_id'])) {
-        redirect_to($loginPath);
-    }
-}
-
-
-function require_admin_role($fallbackPath = '../dashboard.php', $loginPath = '../auth/login.php') {
-    require_login($loginPath);
-
-    if (($_SESSION['role'] ?? '') !== 'admin') {
-        redirect_to($fallbackPath);
+/**
+ * Return the default dashboard path for a given role (project-root relative).
+ */
+function role_dashboard_path(string $role): string
+{
+    switch ($role) {
+        case 'admin':
+            return 'modules/admin/dashboard.php';
+        case 'candidate':
+            return 'modules/candidate/dashboard.php';
+        default:
+            return 'modules/search/dashboard.php';
     }
 }
 
 /**
- * Require guest (not logged in) - redirect to dashboard if user is already authenticated
+ * Require an authenticated user. Two calling styles are supported:
+ *   require_login()                         -> any logged in user
+ *   require_login(['candidate', 'admin'])   -> user must have one of these roles
+ *   require_login('../auth/login.php')      -> legacy, just require login
+ * In every case, returns the user array reconstructed from the session.
  */
-function require_guest($redirectPath = '../dashboard.php') {
+function require_login($rolesOrPath = null): array
+{
     start_app_session();
-    if (isset($_SESSION['user_id'])) {
-        redirect_to($redirectPath);
+
+    if (empty($_SESSION['user_id'])) {
+        redirect_to('auth/login.php');
+    }
+
+    $user = current_user();
+
+    // If an array of allowed roles is given, enforce role membership.
+    if (is_array($rolesOrPath) && $rolesOrPath !== []) {
+        if (!in_array($user['role'] ?? '', $rolesOrPath, true)) {
+            // Send the user to their own dashboard instead of an unauthorised page.
+            redirect_to(role_dashboard_path($user['role'] ?? ''));
+        }
+    }
+
+    return $user;
+}
+
+/**
+ * Require an admin-only page. Non-admins are forwarded to their role dashboard.
+ * The legacy $fallbackPath/$loginPath parameters are accepted for compatibility
+ * but now paths are derived automatically from the user's role.
+ */
+function require_admin_role($fallbackPath = null, $loginPath = null): array
+{
+    $user = require_login();
+
+    if (($user['role'] ?? '') !== 'admin') {
+        redirect_to(role_dashboard_path($user['role'] ?? ''));
+    }
+
+    return $user;
+}
+
+/**
+ * Require guest (not logged in) - redirect to role dashboard if already authenticated.
+ */
+function require_guest($redirectPath = null) {
+    start_app_session();
+
+    if (!empty($_SESSION['user_id'])) {
+        $role = $_SESSION['user_role'] ?? ($_SESSION['role'] ?? '');
+        redirect_to($redirectPath ?? role_dashboard_path($role));
     }
 }
 
@@ -149,6 +254,56 @@ function get_flash_messages() {
     unset($_SESSION['flash_messages']);
 
     return is_array($messages) ? $messages : [];
+}
+
+/**
+ * Short alias used by the shared header.
+ */
+function get_flashes(): array
+{
+    return get_flash_messages();
+}
+
+/**
+ * Human-readable label for a module key (used by the hero eyebrow).
+ */
+function module_label(string $moduleKey): string
+{
+    $labels = [
+        'admin'     => 'Admin Module',
+        'candidate' => 'Candidate Module',
+        'search'    => 'Search Module',
+        'api'       => 'API Module',
+    ];
+
+    return $labels[$moduleKey] ?? ucfirst($moduleKey);
+}
+
+/**
+ * Navigation links for a given module, sourced from the central config.
+ */
+function module_links(string $moduleKey): array
+{
+    $all = app_config('module_links', []);
+    return is_array($all) && isset($all[$moduleKey]) && is_array($all[$moduleKey])
+        ? $all[$moduleKey]
+        : [];
+}
+
+/**
+ * Fetch the most recent notifications for a given user.
+ */
+function fetch_user_notifications(int $userId, int $limit = 20): array
+{
+    $statement = pdo()->prepare(
+        'SELECT id, message, is_read, created_at
+         FROM notifications
+         WHERE user_id = :user_id
+         ORDER BY created_at DESC, id DESC
+         LIMIT ' . (int) $limit
+    );
+    $statement->execute(['user_id' => $userId]);
+    return $statement->fetchAll() ?: [];
 }
 
 function fetch_specialties(): array

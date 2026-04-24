@@ -1,5 +1,5 @@
 <?php
-// Logout endpoint. Sessions are cleared and the user returns to the login page.
+// Logout endpoint. Clears user-related session data and returns to the login page.
 
 require_once __DIR__ . '/../includes/bootstrap.php';
 

@@ -7,10 +7,6 @@ require_guest();
 
 $errors = [];
 
-if (isset($_GET['registered']) && $_GET['registered'] === '1') {
-    add_flash('success', 'Ο λογαριασμός δημιουργήθηκε επιτυχώς. Μπορείτε να συνδεθείτε.');
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Read and clean the submitted credentials before validating them.
     $email = trim($_POST['email'] ?? '');
@@ -28,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             // Always use prepared statements when checking credentials.
             $statement = pdo()->prepare(
-                'SELECT id, name, surname, email, role, password
+                'SELECT id, name, surname, email, phone, role, password
                  FROM users
                  WHERE email = :email
                  LIMIT 1'
@@ -49,6 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+// Pick up any flash messages queued by logout / register so we can display them.
+$flashMessages = get_flash_messages();
 ?>
 <!DOCTYPE html>
 <html lang="el">
@@ -67,7 +66,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="page-body">
-                <?php if (isset($_GET['registered'])): ?>
+                <?php foreach ($flashMessages as $flash): ?>
+                    <div class="message <?php echo e($flash['type']); ?>"><?php echo e($flash['message']); ?></div>
+                <?php endforeach; ?>
+
+                <?php if (isset($_GET['registered']) && $_GET['registered'] === '1'): ?>
                     <div class="message success">Η εγγραφή ολοκληρώθηκε επιτυχώς. Μπορείτε τώρα να συνδεθείτε.</div>
                 <?php endif; ?>
 

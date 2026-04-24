@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'notify_position_changes' => $notifyPositionChanges,
             ]);
 
-            add_flash('success', 'Ο λογαριασμός δημιουργήθηκε επιτυχώς.');
+            add_flash('success', 'Ο λογαριασμός δημιουργήθηκε επιτυχώς. Μπορείτε να συνδεθείτε.');
             redirect_to('auth/login.php?registered=1');
         } catch (PDOException $exception) {
             error_log('Register insert failed: ' . $exception->getMessage());
@@ -85,6 +85,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+// First time the form is shown (GET with no submission) both notification
+// preferences default to "on" which matches the application's behaviour.
+$isInitialLoad = $_SERVER['REQUEST_METHOD'] !== 'POST';
+$notifyNewListsChecked = $isInitialLoad || isset($_POST['notify_new_lists']);
+$notifyPositionChecked = $isInitialLoad || isset($_POST['notify_position_changes']);
 ?>
 <!DOCTYPE html>
 <html lang="el">
@@ -120,11 +126,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label for="phone">Τηλέφωνο</label>
                     <input type="text" name="phone" id="phone" value="<?php echo e($_POST['phone'] ?? ''); ?>">
 
-                    <label for="password">Κωδικός Πρόσβασης</label>
-                    <input type="password" name="password" id="password" required>
+                    <label for="password">Κωδικός Πρόσβασης (τουλάχιστον 8 χαρακτήρες)</label>
+                    <input type="password" name="password" id="password" minlength="8" required>
 
                     <label for="confirm_password">Επιβεβαίωση Κωδικού</label>
-                    <input type="password" name="confirm_password" id="confirm_password" required>
+                    <input type="password" name="confirm_password" id="confirm_password" minlength="8" required>
 
                     <label for="role">Ρόλος Χρήστη</label>
                     <select name="role" id="role" required>
@@ -132,8 +138,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <option value="admin" <?php echo (($_POST['role'] ?? '') === 'admin') ? 'selected' : ''; ?>>Διαχειριστής</option>
                     </select>
 
-                    <label><input type="checkbox" name="notify_new_lists" <?php echo isset($_POST['notify_new_lists']) || !isset($_POST['role']) ? 'checked' : ''; ?>> Ειδοποίηση για νέες λίστες</label>
-                    <label><input type="checkbox" name="notify_position_changes" <?php echo isset($_POST['notify_position_changes']) || !isset($_POST['role']) ? 'checked' : ''; ?>> Ειδοποίηση για αλλαγές θέσης</label>
+                    <label><input type="checkbox" name="notify_new_lists" <?php echo $notifyNewListsChecked ? 'checked' : ''; ?>> Ειδοποίηση για νέες λίστες</label>
+                    <label><input type="checkbox" name="notify_position_changes" <?php echo $notifyPositionChecked ? 'checked' : ''; ?>> Ειδοποίηση για αλλαγές θέσης</label>
 
                     <button type="submit">Ολοκλήρωση Εγγραφής</button>
                 </form>
