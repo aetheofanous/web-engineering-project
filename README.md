@@ -1,144 +1,118 @@
-# Appointable Lists System
+# Appointable Lists
 
-## 👥 Team Members
-- Παντελεήμωνη Αλεξάνδρου (AM 30402)
-- Χριστιάνα Στυλιανού (AM 30356)
-- Αντριάνα Θεοφάνους (AM 30570)
-- Σοφία Κυριάκου (AM 30288)
-- Πελαγία Κωνιωτάκη (AM 31511)
+PHP/PDO web application for monitoring appointment lists of candidates, inspired by the public structure of the Educational Service Commission portal.
 
----
+## Project Scope
 
-## 📌 Project Description
-Το σύστημα “Appointable Lists” είναι μια web εφαρμογή σε PHP/MySQL για την παρακολούθηση υποψηφίων και πινάκων διοριστέων.
+This project implements:
 
-Η εφαρμογή επιτρέπει στους χρήστες να:
-- δημιουργούν λογαριασμό (register)
-- συνδέονται με ασφάλεια (login)
-- βλέπουν protected dashboard
-- αναζητούν υποψηφίους μέσω keyword search
+- landing page with links to all modules
+- authentication with register, login, logout and sessions
+- candidate module with profile, own application tracking and tracking of others
+- public search module with filters, ordering and statistics
+- JSON API module for Postman demo
+- MySQL schema with one-to-many and many-to-many relationships
 
----
+## Technology Stack
 
-## ⚙️ Technologies Used
-- PHP (PDO)
-- MySQL
-- HTML / CSS
-- XAMPP (Apache + MySQL)
+- PHP
+- PDO
+- MySQL / MariaDB
+- HTML
+- CSS
+- XAMPP / Apache
 
----
+## Folder Structure
 
-## 🔐 Security Features
-Η εφαρμογή ακολουθεί βασικές πρακτικές ασφάλειας:
+- `api/`
+- `assets/`
+- `auth/`
+- `database/`
+- `includes/`
+- `modules/`
+- `index.php`
 
-- Prepared Statements (PDO) για αποφυγή SQL Injection
-- password_hash() για ασφαλή αποθήκευση κωδικών
-- password_verify() για έλεγχο login
-- htmlspecialchars() για αποφυγή XSS attacks
-- Session-based authentication
-- Redirect + exit για ασφαλή navigation
+## Database
 
----
+Use the files below:
 
-## 📁 Project Structure
-pinakas_dioristewn/
-│
-├── database/
-│ ├── schema.sql
-│ └── seed.sql
-│
-├── includes/
-│ └── db.php
-│
-├── auth/
-│ ├── register.php
-│ ├── login.php
-│ └── logout.php
-│
-├── modules/
-│ ├── dashboard.php
-│ └── list.php
-│
-├── assets/
-│ └── css/style.css
-│
-└── index.php
+- `database/schema.sql`
+- `database/seed.sql`
 
----
+The schema includes:
 
-## 🚀 Setup Instructions
+- `users`
+- `specialties`
+- `lists`
+- `candidates`
+- `applications`
+- `tracked_candidates`
+- `notifications`
 
-1. Εκκίνηση XAMPP
-2. Εκκίνηση Apache και MySQL
-3. Άνοιγμα phpMyAdmin
-4. Δημιουργία database: appointable_lists
-5. Import των αρχείων:
-- database/schema.sql
-- database/seed.sql
+Relationships included:
 
-6. Άνοιγμα εφαρμογής στον browser: http://localhost/pinakas_dioristewn/
+- one-to-many: `specialties -> lists`
+- one-to-many: `lists -> candidates`
+- many-to-many via bridge table: `users <-> candidates` through `tracked_candidates`
 
----
+## Setup
 
-## 🔑 Demo Users
+1. Start Apache and MySQL in XAMPP.
+2. Open `http://localhost/phpmyadmin`.
+3. Import `database/schema.sql`.
+4. Import `database/seed.sql`.
+5. Open the application at:
+   `http://localhost/web-engineering-project/`
 
-| Email              | Password |
-|-------------------|----------|
-| admin@example.com | password |
-| eleni@example.com | password |
+## Demo Accounts
 
----
+- Admin:
+  `admin@example.com` / `password`
+- Candidate:
+  `eleni@example.com` / `password`
 
-## 🧩 Features
+## Main Pages
 
-- ✔ User Registration με validation
-- ✔ Secure Login / Logout
-- ✔ Protected Dashboard (session-based)
-- ✔ Candidate List με keyword search
-- ✔ Responsive και καθαρό UI design
+- Landing page:
+  `/index.php`
+- Login:
+  `/auth/login.php`
+- Register:
+  `/auth/register.php`
+- Candidate dashboard:
+  `/modules/candidate/dashboard.php`
+- Public search:
+  `/modules/search/search.php`
+- Statistics:
+  `/modules/search/statistics.php`
+- API home:
+  `/api/api.php`
 
----
+## API Endpoints
 
-## 🧑‍💻 Responsibilities
+- `GET /api/candidates.php`
+- `POST /api/candidates.php`
+- `GET /api/lists.php`
+- `PUT /api/lists.php?id=ID`
+- `GET /api/tracked.php`
+- `DELETE /api/tracked.php?id=ID`
+- `GET /api/stats.php`
 
-- Παντελεήμωνη Αλεξάνδρου:
-  - Authentication system (Register / Login / Logout)
-  - Session management & security (password_hash, password_verify)
-  - Dashboard implementation (protected page)
-  - UI design and styling (CSS, layout consistency)
-  - Integration of backend with frontend
+## Example Edge Cases for Postman
 
-- Χριστιάνα Στυλιανού:
-  - Database design (schema.sql)
-  - Creation of users table and relations
-  - Seed data implementation (seed.sql)
-  - Database structure validation
+- `GET /api/lists.php?id=999` is not supported for single fetch and should be tested through invalid update id flow
+- `PUT /api/lists.php?id=999` returns `404`
+- `POST /api/candidates.php` with missing required fields returns `400`
+- `DELETE /api/tracked.php?id=999` returns `404`
 
-- Αντριανή Θεοφάνους:
-  - Candidate list module (list.php)
-  - Keyword search functionality (GET + LIKE query)
-  - Data display in table format
-  - Query optimization and filtering logic
+## Security Rules
 
-- Σοφία Κυριάκου:
-  - Input validation (server-side validation rules)
-  - Error handling (forms & messages)
-  - Security checks (prepared statements usage)
-  - Form structure and usability improvements
+- ΠΑΝΤΑ Prepared Statements - ποτέ string concatenation σε SQL
+- ΠΑΝΤΑ `password_hash()` - ποτέ plain-text password στη βάση
+- ΠΑΝΤΑ `htmlspecialchars()` σε κάθε echo user data
+- ΠΑΝΤΑ `exit` μετά από κάθε `header()` redirect
+- ΠΟΤΕ `die($e->getMessage())`
 
-- Πελαγία Κωνιωτάκη:
-  - UI/UX improvements (layout, navigation)
-  - Page structure consistency (header, footer, navigation)
-  - Design alignment across all pages
-  - General testing and bug fixing
+## Design Note
 
----
-
-## 📌 Notes
-Το project υλοποιήθηκε σύμφωνα με τις οδηγίες του μαθήματος και ακολουθεί τις βασικές αρχές ασφάλειας και καλής πρακτικής στον web development.
-
----
-
-## 🏁 Status
-✔ Fully functional  
-✔ Ready for submission  
+The UI is inspired by `https://www.gov.cy/eey/` but adapted into a student project with a simpler structure and custom presentation layout.

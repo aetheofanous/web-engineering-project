@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Πίνακες Διοριστέων</title>
+  <title>Παρακολούθηση Πινάκων Διοριστέων</title>
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -30,13 +30,14 @@
             <ul class="portal-links">
               <li><a href="modules/dashboard.php">Πίνακας Ελέγχου</a></li>
               <li><a href="modules/list.php">Κατάλογοι Διοριστέων</a></li>
+              <li><a href="api/api.php">API Module</a></li>
             </ul>
           </section>
         </div>
 
         <section>
           <h2 class="section-title">Γενικές Πληροφορίες</h2>
-          <p class="section-text">Η παρούσα εφαρμογή αναπτύχθηκε για εκπαιδευτικούς σκοπούς και ακολουθεί τη λογική ενός απλού κυβερνητικού portal, με έμφαση στην ασφαλή σύνδεση χρηστών, στην προστασία των συνεδριών και στην αναζήτηση δεδομένων μέσω PDO Prepared Statements.</p>
+          <p class="section-text">Η παρούσα εφαρμογή αναπτύχθηκε για εκπαιδευτικούς σκοπούς και ακολουθεί τη λογική ενός απλού κυβερνητικού portal, με έμφαση στην ασφαλή σύνδεση χρηστών, στην προστασία των συνεδριών και στην αναζήτηση δεδομένων μέσω PDO prepared statements.</p>
         </section>
       </div>
     </div>

@@ -1,76 +1,87 @@
 <?php
-session_start();
+// Registration page available to public visitors and candidates.
 
-function h($value) {
-    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-}
+require_once __DIR__ . '/../includes/bootstrap.php';
+
+require_guest();
 
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
+    // Read and normalise all user inputs before touching the database.
+    $name = trim($_POST['name'] ?? '');
+    $surname = trim($_POST['surname'] ?? '');
     $email = trim($_POST['email'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
     $password = $_POST['password'] ?? '';
-    $confirm_password = $_POST['confirm_password'] ?? '';
-    $role = trim($_POST['role'] ?? '');
+    $confirmPassword = $_POST['confirm_password'] ?? '';
+    $role = trim($_POST['role'] ?? 'candidate');
+    $notifyNewLists = isset($_POST['notify_new_lists']) ? 1 : 0;
+    $notifyPositionChanges = isset($_POST['notify_position_changes']) ? 1 : 0;
 
-    if ($username === '' || $email === '' || $password === '' || $confirm_password === '' || $role === '') {
-        $errors[] = 'Όλα τα υποχρεωτικά πεδία πρέπει να συμπληρωθούν.';
+    if ($name === '' || $surname === '' || $email === '' || $password === '' || $confirmPassword === '') {
+        $errors[] = 'Συμπληρώστε όλα τα υποχρεωτικά πεδία.';
     }
 
     if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = 'Η διεύθυνση email δεν είναι έγκυρη.';
+        $errors[] = 'Το email δεν έχει έγκυρη μορφή.';
     }
 
     if ($password !== '' && strlen($password) < 8) {
-        $errors[] = 'Ο κωδικός πρόσβασης πρέπει να έχει τουλάχιστον 8 χαρακτήρες.';
+        $errors[] = 'Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.';
     }
 
-    if ($password !== $confirm_password) {
-        $errors[] = 'Ο κωδικός και η επιβεβαίωση δεν ταιριάζουν.';
+    if ($password !== $confirmPassword) {
+        $errors[] = 'Οι κωδικοί δεν ταιριάζουν.';
     }
 
-    if ($role !== '' && !in_array($role, ['admin', 'candidate'], true)) {
-        $errors[] = 'Ο επιλεγμένος ρόλος δεν είναι έγκυρος.';
+    if (!in_array($role, ['admin', 'candidate'], true)) {
+        $errors[] = 'Ο ρόλος που επιλέχθηκε δεν επιτρέπεται.';
     }
 
-    if (!$errors) {
+    if ($errors === []) {
         try {
-            $pdo = require_once __DIR__ . '/../includes/db.php';
+            // Check email uniqueness before creating a new account.
+            $checkStatement = pdo()->prepare('SELECT id FROM users WHERE email = :email LIMIT 1');
+            $checkStatement->execute(['email' => $email]);
 
-            $stmt = $pdo->prepare('SELECT id FROM users WHERE email = :email');
-            $stmt->execute(['email' => $email]);
-
-            if ($stmt->fetch()) {
-                $errors[] = 'Υπάρχει ήδη εγγεγραμμένος λογαριασμός με αυτό το email.';
+            if ($checkStatement->fetch()) {
+                $errors[] = 'Υπάρχει ήδη λογαριασμός με αυτό το email.';
             }
-        } catch (PDOException $e) {
-            error_log('Register DB error: ' . $e->getMessage());
-            $errors[] = 'Παρουσιάστηκε σφάλμα βάσης δεδομένων. Προσπαθήστε ξανά αργότερα.';
+        } catch (PDOException $exception) {
+            error_log('Register check failed: ' . $exception->getMessage());
+            $errors[] = 'Δεν ήταν δυνατός ο έλεγχος του λογαριασμού αυτή τη στιγμή.';
         }
     }
 
-    if (!$errors) {
+    if ($errors === []) {
         try {
-            $hashed = password_hash($password, PASSWORD_DEFAULT);
+            // Hash the password before storing it and keep notification preferences too.
+            $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
-            $stmt = $pdo->prepare(
-                'INSERT INTO users (username, email, password_hash, role)
-                 VALUES (:username, :email, :password_hash, :role)'
+            $insertStatement = pdo()->prepare(
+                'INSERT INTO users (
+                    name, surname, email, password, phone, role, notify_new_lists, notify_position_changes
+                 ) VALUES (
+                    :name, :surname, :email, :password, :phone, :role, :notify_new_lists, :notify_position_changes
+                 )'
             );
-
-            $stmt->execute([
-                'username' => $username,
+            $insertStatement->execute([
+                'name' => $name,
+                'surname' => $surname,
                 'email' => $email,
-                'password_hash' => $hashed,
+                'password' => $passwordHash,
+                'phone' => $phone !== '' ? $phone : null,
                 'role' => $role,
+                'notify_new_lists' => $notifyNewLists,
+                'notify_position_changes' => $notifyPositionChanges,
             ]);
 
-            header('Location: login.php?registered=1');
-            exit;
-        } catch (PDOException $e) {
-            error_log('Register DB error: ' . $e->getMessage());
-            $errors[] = 'Η εγγραφή δεν ολοκληρώθηκε. Προσπαθήστε ξανά αργότερα.';
+            add_flash('success', 'Ο λογαριασμός δημιουργήθηκε επιτυχώς.');
+            redirect_to('auth/login.php?registered=1');
+        } catch (PDOException $exception) {
+            error_log('Register insert failed: ' . $exception->getMessage());
+            $errors[] = 'Η εγγραφή δεν ολοκληρώθηκε. Δοκιμάστε ξανά αργότερα.';
         }
     }
 }
@@ -79,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="el">
 <head>
     <meta charset="UTF-8">
-    <title>Εγγραφή Χρήστη</title>
+    <title>Register</title>
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
@@ -93,15 +104,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="page-body">
                 <?php foreach ($errors as $error): ?>
-                    <div class="message error"><?php echo h($error); ?></div>
+                    <div class="message error"><?php echo e($error); ?></div>
                 <?php endforeach; ?>
 
                 <form method="post" action="">
-                    <label for="username">Όνομα Χρήστη</label>
-                    <input type="text" name="username" id="username" value="<?php echo h($_POST['username'] ?? ''); ?>" required>
+                    <label for="name">Όνομα</label>
+                    <input type="text" name="name" id="name" value="<?php echo e($_POST['name'] ?? ''); ?>" required>
+
+                    <label for="surname">Επίθετο</label>
+                    <input type="text" name="surname" id="surname" value="<?php echo e($_POST['surname'] ?? ''); ?>" required>
 
                     <label for="email">Ηλεκτρονική Διεύθυνση</label>
-                    <input type="email" name="email" id="email" value="<?php echo h($_POST['email'] ?? ''); ?>" required>
+                    <input type="email" name="email" id="email" value="<?php echo e($_POST['email'] ?? ''); ?>" required>
+
+                    <label for="phone">Τηλέφωνο</label>
+                    <input type="text" name="phone" id="phone" value="<?php echo e($_POST['phone'] ?? ''); ?>">
 
                     <label for="password">Κωδικός Πρόσβασης</label>
                     <input type="password" name="password" id="password" required>
@@ -111,10 +128,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <label for="role">Ρόλος Χρήστη</label>
                     <select name="role" id="role" required>
-                        <option value="">-- Επιλέξτε ρόλο --</option>
-                        <option value="candidate" <?php echo (($_POST['role'] ?? '') === 'candidate') ? 'selected' : ''; ?>>Υποψήφιος</option>
+                        <option value="candidate" <?php echo (($_POST['role'] ?? 'candidate') === 'candidate') ? 'selected' : ''; ?>>Υποψήφιος</option>
                         <option value="admin" <?php echo (($_POST['role'] ?? '') === 'admin') ? 'selected' : ''; ?>>Διαχειριστής</option>
                     </select>
+
+                    <label><input type="checkbox" name="notify_new_lists" <?php echo isset($_POST['notify_new_lists']) || !isset($_POST['role']) ? 'checked' : ''; ?>> Ειδοποίηση για νέες λίστες</label>
+                    <label><input type="checkbox" name="notify_position_changes" <?php echo isset($_POST['notify_position_changes']) || !isset($_POST['role']) ? 'checked' : ''; ?>> Ειδοποίηση για αλλαγές θέσης</label>
 
                     <button type="submit">Ολοκλήρωση Εγγραφής</button>
                 </form>
