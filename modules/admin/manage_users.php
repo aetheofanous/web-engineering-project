@@ -256,28 +256,39 @@ $messages = array_merge(
                 </section>
 
                 <div class="split-grid">
-                    <section class="panel-section">
+                    <section class="panel-section add-user-card">
                         <h2 class="section-title">Add User</h2>
-                        <form method="post" action="">
+
+                        <form method="post" action="" class="form-grid">
                             <input type="hidden" name="action" value="add_user">
 
-                            <label for="username">Username</label>
-                            <input type="text" name="username" id="username" required>
+                            <div>
+                                <label for="username">Username</label>
+                                <input type="text" name="username" id="username" required>
+                            </div>
 
-                            <label for="email">Email</label>
-                            <input type="email" name="email" id="email" required>
+                            <div>
+                                <label for="email">Email</label>
+                                <input type="email" name="email" id="email" required>
+                            </div>
 
-                            <label for="role">Role</label>
-                            <select name="role" id="role" required>
-                                <option value="">-- Επιλέξτε ρόλο --</option>
-                                <option value="candidate">candidate</option>
-                                <option value="admin">admin</option>
-                            </select>
+                            <div class="full-width">
+                                <label for="role">Role</label>
+                                <select name="role" id="role" required>
+                                    <option value="">-- Επιλέξτε ρόλο --</option>
+                                    <option value="candidate">candidate</option>
+                                    <option value="admin">admin</option>
+                                </select>
+                            </div>
 
-                            <label for="password">Password</label>
-                            <input type="password" name="password" id="password" required>
+                            <div class="full-width">
+                                <label for="password">Password</label>
+                                <input type="password" name="password" id="password" required>
+                            </div>
 
-                            <button type="submit" class="primary-button">Create User</button>
+                            <div class="full-width">
+                                <button type="submit" class="primary-button">Create User</button>
+                            </div>
                         </form>
                     </section>
 
