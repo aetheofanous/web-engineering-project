@@ -27,8 +27,20 @@ $sql = 'SELECT candidates.id, candidates.name, candidates.surname, candidates.po
 $params = [];
 
 if ($keyword !== '') {
-    $sql .= ' AND (candidates.name LIKE :keyword OR candidates.surname LIKE :keyword OR specialties.name LIKE :keyword)';
-    $params['keyword'] = '%' . $keyword . '%';
+    $sql .= ' AND (
+        candidates.name LIKE :keyword_name
+        OR candidates.surname LIKE :keyword_surname
+        OR CAST(lists.year AS CHAR) LIKE :keyword_year
+        OR CAST(candidates.position AS CHAR) LIKE :keyword_position
+        OR CAST(candidates.points AS CHAR) LIKE :keyword_points
+    )';
+    $prefixPattern = $keyword . '%';
+    $containsPattern = '%' . $keyword . '%';
+    $params['keyword_name'] = $prefixPattern;
+    $params['keyword_surname'] = $prefixPattern;
+    $params['keyword_year'] = $containsPattern;
+    $params['keyword_position'] = $containsPattern;
+    $params['keyword_points'] = $containsPattern;
 }
 
 if ($specialtyId > 0) {
