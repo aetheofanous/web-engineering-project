@@ -1,9 +1,12 @@
 <?php
 // Candidate page for linking the logged-in user to a candidate entry and viewing own applications.
 
-require_once __DIR__ . '/../../includes/bootstrap.php';
+require_once __DIR__ . '/../../includes/functions.php';
 
-$user = require_login(['candidate', 'admin']);
+require_login('../auth/login.php');
+$userId = $_SESSION['user_id'];
+$pdo = require __DIR__ . '/../../includes/db.php';
+ensure_specialty_management_schema($pdo);
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -20,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'SELECT id FROM applications WHERE user_id = :user_id AND candidate_id = :candidate_id LIMIT 1'
                 );
                 $checkStatement->execute([
-                    'user_id' => $user['id'],
+                    'user_id' => $userId,
                     'candidate_id' => $candidateId,
                 ]);
 
@@ -30,14 +33,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                          VALUES (:user_id, :candidate_id)'
                     );
                     $insertStatement->execute([
-                        'user_id' => $user['id'],
+                        'user_id' => $userId,
                         'candidate_id' => $candidateId,
                     ]);
 
                     $candidateOptions = fetch_candidate_options();
                     foreach ($candidateOptions as $option) {
                         if ((int) $option['id'] === $candidateId) {
-                            create_notification($user['id'], notification_message_for_link($option));
+                            create_notification($userId, notification_message_for_link($option));
                             break;
                         }
                     }
