@@ -1,12 +1,4 @@
-/* --- Banner row flex layout --- */
-
-.banner-row-flex .eyebrow {
-    margin: 0;
-}
 /* --- Custom header positioning for Admin Module --- */
-.page-banner {
-    position: relative;
-}
 
 .button-link {
     display: inline-flex;
@@ -35,9 +27,6 @@ button {
     color: #fff;
     cursor: pointer;
     font-weight: 600;
-}
-.eyebrow {
-    margin: 0;
 }
 
 :root {
@@ -156,11 +145,9 @@ body {
 .banner-row-flex {
     display: flex;
     align-items: center;
+    margin-bottom: 6px;
 }
 
-.banner-row-flex .eyebrow {
-    margin: 0;
-}
 
 .eyebrow {
     margin: 0;
@@ -209,6 +196,9 @@ table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.85rem;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 thead th {
