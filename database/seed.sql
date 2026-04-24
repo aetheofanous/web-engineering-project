@@ -1,10 +1,18 @@
 USE appointable_lists;
 
-INSERT INTO specialties (id, name, description) VALUES
-  (1, 'Mathematics', 'Υποψήφιοι για διδασκαλία μαθηματικών στη Μέση Εκπαίδευση.'),
-  (2, 'Physics', 'Υποψήφιοι για φυσικές επιστήμες και εργαστηριακή διδασκαλία.'),
-  (3, 'Informatics', 'Υποψήφιοι πληροφορικής και ψηφιακών τεχνολογιών.'),
-  (4, 'Philology', 'Υποψήφιοι φιλολογικών μαθημάτων και γλωσσικής διδασκαλίας.');
+DELETE FROM notifications;
+DELETE FROM tracked_candidates;
+DELETE FROM applications;
+DELETE FROM candidates;
+DELETE FROM lists;
+DELETE FROM specialties;
+DELETE FROM users;
+
+INSERT INTO specialties (id, name, description, is_active) VALUES
+  (1, 'Mathematics', 'Mathematics educators and related specialties', 1),
+  (2, 'Physics', 'Physics educators and related specialties', 1),
+  (3, 'Informatics', 'Computer science educators and related specialties', 1),
+  (4, 'Chemistry', 'Chemistry educators and related specialties', 1);
 
 INSERT INTO lists (id, specialty_id, year, status) VALUES
   (1, 1, 2023, 'published'),

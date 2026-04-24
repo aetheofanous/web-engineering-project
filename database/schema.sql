@@ -28,8 +28,9 @@ CREATE TABLE users (
 
 CREATE TABLE specialties (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(150) NOT NULL UNIQUE,
-  description TEXT DEFAULT NULL
+  name VARCHAR(150) NOT NULL,
+  description TEXT,
+  is_active TINYINT(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB;
 
 CREATE TABLE lists (
