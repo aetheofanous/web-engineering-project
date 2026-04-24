@@ -1,3 +1,38 @@
+.page-banner p {
+    margin: 4px 0;
+    line-height: 1.4;
+}
+
+.page-banner p:first-of-type {
+    margin-top: 4px;
+}
+/* dashboard links */
+.dashboard-links {
+    margin-top: 16px;
+    display: flex;
+    gap: 12px;
+}
+.dashboard-links a {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.danger-link {
+    border: 1px solid #e3b4b4;
+    color: #c94b4b;
+    background: #fff;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: 600;
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+.danger-link:hover {
+    background: #fdf0f0;
+    color: #a83232;
+}
 /* 
    DASHBOARD STYLES
  */
@@ -7,19 +42,20 @@
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
     margin-bottom: 28px;
-    margin-top: 20px;
+    margin-top: 10px;
 }
 
 .stat-card {
-    background: var(--surface-soft);
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 18px;
     transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 .stat-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
     box-shadow: 0 8px 18px rgba(0,0,0,0.06);
 }
 
@@ -50,6 +86,10 @@
     color: inherit;
     transition: all 0.2s ease;
     cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
 .action-card:hover {
@@ -68,7 +108,7 @@
     font-size: 0.9rem;
 }
 .page-body {
-    padding: 32px;
+    padding: 20px 28px 32px;
 }
 /* --- Custom header positioning for Admin Module --- */
 
@@ -204,8 +244,8 @@ body {
     flex-direction: column;
     width: 100%;
     align-items: stretch;  
-    gap: 6px;
-    padding: 22px 28px;
+    gap: 2px;
+    padding: 18px 28px;
     border-bottom: 1px solid var(--border);
     position: relative;
 }
@@ -242,6 +282,9 @@ body {
     border: 1px solid var(--border-strong);
     color: var(--primary);
     cursor: pointer;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-weight: 600;
 }
 
 .button-link.secondary:hover {

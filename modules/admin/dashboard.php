@@ -193,9 +193,9 @@ $username = $_SESSION['username'] ?? 'Admin';
                     </a>
                 </div>
 
-                <div class="page-actions">
-                    <a class="button-link secondary" href="../list.php">Προβολή Καταλόγων</a>
-                    <a class="button-link" href="../../auth/logout.php">Αποσύνδεση</a>
+                <div class="dashboard-links">
+                    <a href="../list.php" class="button-link secondary">Προβολή Καταλόγων</a>
+                    <a href="../../auth/logout.php" class="button-link danger-link">Αποσύνδεση</a>
                 </div>
             </div>
         </div>
