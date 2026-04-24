@@ -1,6 +1,6 @@
 # Team Names
 
-- Sophia Kyriacou 30288
+
 - Antriani Theofanous 30570
 - Christiana Stylianou 30356
 - Pelagia Koniotaki 31511
