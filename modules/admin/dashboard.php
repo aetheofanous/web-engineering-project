@@ -12,12 +12,17 @@ $stats = [
     'candidates' => (int) $pdo->query('SELECT COUNT(*) FROM candidates')->fetchColumn(),
     'active_specialties' => (int) $pdo->query('SELECT COUNT(*) FROM specialties WHERE is_active = 1')->fetchColumn(),
 ];
-$username = $_SESSION['username'] ?? 'Admin';
+$currentAdmin = current_user() ?? [];
+$displayName = trim(($currentAdmin['name'] ?? '') . ' ' . ($currentAdmin['surname'] ?? ''));
+if ($displayName === '') {
+    $displayName = $_SESSION['username'] ?? 'Admin';
+}
 ?>
 <!DOCTYPE html>
 <html lang="el">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
     <style>
@@ -115,29 +120,29 @@ $username = $_SESSION['username'] ?? 'Admin';
                 <p class="eyebrow">Διαχείριση Συστήματος</p>
                 <h1 class="auth-title">Admin Dashboard</h1>
                 <p class="auth-subtitle">Ο πίνακας του διαχειριστή συγκεντρώνει τις βασικές λειτουργίες εποπτείας του συστήματος, με άμεση πρόσβαση σε χρήστες, πίνακες και αναφορές.</p>
-                <p class="section-text">Καλώς ήρθες, <?php echo h($username); ?></p>
+                <p class="section-text">Καλώς ήρθες, <?php echo h($displayName); ?></p>
                 <p class="field-help">Επίλεξε μια ενότητα για να ξεκινήσεις τη διαχείριση.</p>
             </div>
 
             <div class="page-body">
                 <div class="dashboard-grid">
                     <div class="stat-card">
-                        <h3>5</h3>
+                        <h3><?php echo (int) $stats['users']; ?></h3>
                         <p>Χρήστες</p>
                     </div>
 
                     <div class="stat-card">
-                        <h3>4</h3>
+                        <h3><?php echo (int) $stats['lists']; ?></h3>
                         <p>Πίνακες</p>
                     </div>
 
                     <div class="stat-card">
-                        <h3>5</h3>
+                        <h3><?php echo (int) $stats['candidates']; ?></h3>
                         <p>Υποψήφιοι</p>
                     </div>
 
                     <div class="stat-card">
-                        <h3>4</h3>
+                        <h3><?php echo (int) $stats['active_specialties']; ?></h3>
                         <p>Ειδικότητες</p>
                     </div>
                 </div>
@@ -189,6 +194,19 @@ $username = $_SESSION['username'] ?? 'Admin';
                         <div class="admin-tile-content">
                             <span class="admin-tile-title">Reports</span>
                             <span class="admin-tile-text">Συγκεντρωτικά στατιστικά και γραφική απεικόνιση των δεδομένων.</span>
+                        </div>
+                    </a>
+
+                    <a class="admin-tile" href="profile.php">
+                        <span class="admin-tile-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="48" height="48" role="img" focusable="false">
+                                <path d="M20 21c0-3.31-3.58-6-8-6s-8 2.69-8 6"></path>
+                                <circle cx="12" cy="8" r="5"></circle>
+                            </svg>
+                        </span>
+                        <div class="admin-tile-content">
+                            <span class="admin-tile-title">My Profile</span>
+                            <span class="admin-tile-text">Αλλαγή προσωπικών στοιχείων και κωδικού πρόσβασης.</span>
                         </div>
                     </a>
                 </div>

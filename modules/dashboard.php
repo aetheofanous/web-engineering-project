@@ -7,13 +7,16 @@ $username = $_SESSION['username'] ?? 'User';
 $role = $_SESSION['role'] ?? 'candidate';
 
 if ($role === 'admin') {
-    redirect_to('admin/dashboard.php');
+    redirect_to('modules/admin/dashboard.php');
+} elseif ($role === 'candidate') {
+    redirect_to('modules/candidate/dashboard.php');
 }
 ?>
 <!DOCTYPE html>
 <html lang="el">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Πίνακας Ελέγχου</title>
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>

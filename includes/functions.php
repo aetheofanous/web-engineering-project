@@ -374,6 +374,81 @@ function create_notification(int $userId, string $message): void
     ]);
 }
 
+/**
+ * API helper: emit a JSON response with the given HTTP status code and exit.
+ * Always sets Content-Type: application/json so browsers and Postman render
+ * the payload correctly. Called by every endpoint under /api/.
+ */
+function json_response(int $statusCode, $payload): void
+{
+    if (!headers_sent()) {
+        http_response_code($statusCode);
+        header('Content-Type: application/json; charset=UTF-8');
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization');
+    }
+
+    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    exit;
+}
+
+/**
+ * API helper: ensure the incoming request uses an allowed HTTP method.
+ * Handles CORS preflight OPTIONS automatically. Returns the active method.
+ */
+function require_api_method(array $allowedMethods): string
+{
+    $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+
+    // CORS preflight: reply 204 without body so third-party clients can connect.
+    if ($method === 'OPTIONS') {
+        if (!headers_sent()) {
+            http_response_code(204);
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: ' . implode(', ', $allowedMethods) . ', OPTIONS');
+            header('Access-Control-Allow-Headers: Content-Type, Authorization');
+        }
+        exit;
+    }
+
+    if (!in_array($method, $allowedMethods, true)) {
+        if (!headers_sent()) {
+            header('Allow: ' . implode(', ', $allowedMethods));
+        }
+        json_response(405, [
+            'status'  => 'error',
+            'message' => 'Method not allowed. Use: ' . implode(', ', $allowedMethods),
+        ]);
+    }
+
+    return $method;
+}
+
+/**
+ * API helper: read the raw request body and decode it as JSON.
+ * Returns an associative array. On malformed JSON, responds 400 and exits.
+ */
+function json_input(): array
+{
+    $raw = file_get_contents('php://input');
+
+    if ($raw === false || $raw === '') {
+        return [];
+    }
+
+    $decoded = json_decode($raw, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        json_response(400, [
+            'status'  => 'error',
+            'message' => 'Invalid JSON payload: ' . json_last_error_msg(),
+        ]);
+    }
+
+    return is_array($decoded) ? $decoded : [];
+}
+
 function ensure_specialty_management_schema(PDO $pdo) {
     $stmt = $pdo->query("SHOW COLUMNS FROM specialties LIKE 'is_active'");
     $column = $stmt->fetch();

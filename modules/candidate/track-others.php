@@ -1,5 +1,6 @@
 <?php
-// Candidate page for tracking other candidates in appointment lists.
+// Track Others — rewritten to match the admin module styling
+// (auth-container > auth-card, page-banner, section-card, table-wrap, modal).
 
 require_once __DIR__ . '/../../includes/bootstrap.php';
 
@@ -21,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                      VALUES (:user_id, :candidate_id)'
                 );
                 $statement->execute([
-                    'user_id' => $user['id'],
+                    'user_id'      => $user['id'],
                     'candidate_id' => $candidateId,
                 ]);
                 add_flash('success', 'Ο υποψήφιος προστέθηκε στη λίστα παρακολούθησης.');
@@ -43,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                      WHERE id = :id AND user_id = :user_id'
                 );
                 $statement->execute([
-                    'id' => $trackedId,
+                    'id'      => $trackedId,
                     'user_id' => $user['id'],
                 ]);
                 add_flash('success', 'Η παρακολούθηση αφαιρέθηκε.');
@@ -57,6 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $candidateOptions = fetch_candidate_options();
+
 $trackedStatement = pdo()->prepare(
     'SELECT tracked_candidates.id, tracked_candidates.tracked_at,
             candidates.name, candidates.surname, candidates.position, candidates.points,
@@ -71,78 +73,169 @@ $trackedStatement = pdo()->prepare(
 $trackedStatement->execute(['user_id' => $user['id']]);
 $trackedRows = $trackedStatement->fetchAll();
 
-$pageTitle = 'Track Others';
-$pageSubtitle = 'Παρακολούθηση άλλων υποψηφίων στους πίνακες διοριστέων με εύκολη προσθήκη και αφαίρεση.';
-$moduleKey = 'candidate';
-$pageKey = 'track-others';
-
-require __DIR__ . '/../../includes/header.php';
+$messages = array_merge(
+    get_flash_messages(),
+    array_map(
+        function ($error) {
+            return ['type' => 'error', 'message' => $error];
+        },
+        $errors
+    )
+);
 ?>
-
-<?php foreach ($errors as $error): ?>
-    <div class="flash flash--error"><?php echo e($error); ?></div>
-<?php endforeach; ?>
-
-<section class="content-grid">
-    <article class="form-card">
-        <h2>Προσθήκη Παρακολούθησης</h2>
-        <form method="post" action="">
-            <input type="hidden" name="action" value="track">
-            <div class="field">
-                <label for="tracked_candidate_id">Υποψήφιος</label>
-                <select id="tracked_candidate_id" name="candidate_id" required>
-                    <option value="">Επιλέξτε</option>
-                    <?php foreach ($candidateOptions as $option): ?>
-                        <option value="<?php echo e($option['id']); ?>"><?php echo e(candidate_label($option)); ?></option>
-                    <?php endforeach; ?>
-                </select>
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Others</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="page-banner">
+                <div class="banner-row-flex">
+                    <p class="eyebrow">Candidate Module</p>
+                    <a class="button-link secondary header-back-link" href="dashboard.php">
+                        ← Επιστροφή στο Candidate Dashboard
+                    </a>
+                </div>
+                <h1 class="auth-title">Track Others</h1>
+                <p class="auth-subtitle">Παρακολουθήστε άλλους υποψηφίους στους επίσημους πίνακες διοριστέων, είτε για σύγκριση μορίων είτε για αναφορά, με εύκολη προσθήκη και αφαίρεση.</p>
             </div>
-            <button type="submit">Track Candidate</button>
-        </form>
-    </article>
 
-    <article class="panel">
-        <h2>Γιατί είναι χρήσιμο</h2>
-        <ul class="bullet-list">
-            <li>Επιτρέπει δημόσια παρακολούθηση τρίτων όταν ο χρήστης ενδιαφέρεται για σύγκριση θέσεων.</li>
-            <li>Καλύπτει το many-to-many requirement μέσω του πίνακα `tracked_candidates`.</li>
-            <li>Δείχνει ξεκάθαρο business flow στην παρουσίαση.</li>
-        </ul>
-    </article>
-</section>
+            <div class="page-body">
+                <?php foreach ($messages as $message): ?>
+                    <div class="message <?php echo h($message['type']); ?>"><?php echo h($message['message']); ?></div>
+                <?php endforeach; ?>
 
-<section class="table-card">
-    <h2>Tracked Candidates</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Candidate</th>
-                <th>Specialty</th>
-                <th>Year</th>
-                <th>Position</th>
-                <th>Tracked At</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($trackedRows as $row): ?>
-                <tr>
-                    <td><?php echo e($row['name'] . ' ' . $row['surname']); ?></td>
-                    <td><?php echo e($row['specialty_name']); ?></td>
-                    <td><?php echo e($row['year']); ?></td>
-                    <td><?php echo e($row['position']); ?></td>
-                    <td><?php echo e(date('d/m/Y H:i', strtotime($row['tracked_at']))); ?></td>
-                    <td>
-                        <form method="post" action="">
-                            <input type="hidden" name="action" value="untrack">
-                            <input type="hidden" name="tracked_id" value="<?php echo e($row['id']); ?>">
-                            <button class="button button--danger" type="submit">Remove</button>
-                        </form>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-</section>
+                <div class="section-card section-card-compact">
+                    <h2 class="section-title">Προσθήκη Παρακολούθησης</h2>
+                    <p class="section-text">Επιλέξτε από τη λίστα τον υποψήφιο που θέλετε να παρακολουθείτε στους πίνακες διοριστέων. Κάθε υποψήφιος μπορεί να προστεθεί μόνο μία φορά.</p>
 
-<?php require __DIR__ . '/../../includes/footer.php'; ?>
+                    <form method="post" action="" class="add-specialty-form">
+                        <input type="hidden" name="action" value="track">
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="tracked_candidate_id">Υποψήφιος</label>
+                                <select name="candidate_id" id="tracked_candidate_id" class="form-input" required>
+                                    <option value="">-- Επιλέξτε υποψήφιο --</option>
+                                    <?php foreach ($candidateOptions as $option): ?>
+                                        <option value="<?php echo h($option['id']); ?>">
+                                            <?php echo h(candidate_label($option)); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <span class="form-hint">Εμφανίζονται όλοι οι υποψήφιοι από τους διαθέσιμους πίνακες, ταξινομημένοι ανά έτος και ειδικότητα.</span>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="primary-button">
+                                <span class="btn-icon">+</span> Προσθήκη Παρακολούθησης
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="section-card section-card-compact">
+                    <div class="section-header">
+                        <h2 class="section-title">Tracked Candidates</h2>
+                        <p class="section-text">Σύνολο παρακολουθούμενων: <strong><?php echo h(count($trackedRows)); ?></strong></p>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Υποψήφιος</th>
+                                    <th>Ειδικότητα</th>
+                                    <th>Έτος</th>
+                                    <th>Θέση</th>
+                                    <th>Μόρια</th>
+                                    <th>Προστέθηκε</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if ($trackedRows === []): ?>
+                                    <tr>
+                                        <td colspan="8" class="empty-cell">Δεν υπάρχουν ακόμη παρακολουθούμενοι υποψήφιοι.</td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach ($trackedRows as $row): ?>
+                                        <tr>
+                                            <td><?php echo h($row['id']); ?></td>
+                                            <td><?php echo h($row['name'] . ' ' . $row['surname']); ?></td>
+                                            <td><?php echo h($row['specialty_name']); ?></td>
+                                            <td><?php echo h($row['year']); ?></td>
+                                            <td><span class="status-badge admin">#<?php echo h($row['position']); ?></span></td>
+                                            <td><?php echo h($row['points']); ?></td>
+                                            <td><?php echo h(date('d/m/Y H:i', strtotime($row['tracked_at']))); ?></td>
+                                            <td>
+                                                <div class="table-actions">
+                                                    <button type="button" class="table-button danger"
+                                                        onclick="openUntrackModal(<?php echo h($row['id']); ?>, <?php echo json_encode($row['name'] . ' ' . $row['surname']); ?>)">
+                                                        Αφαίρεση
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="untrackModal" class="modal">
+        <div class="modal-content">
+            <button class="close" onclick="closeUntrackModal()">×</button>
+            <h3 class="section-title">Αφαίρεση Παρακολούθησης</h3>
+            <p class="section-text">
+                Είσαι σίγουρος/η ότι θέλεις να αφαιρέσεις την παρακολούθηση για τον/την <strong id="untrackCandidateName"></strong>;
+            </p>
+            <form method="post">
+                <input type="hidden" name="action" value="untrack">
+                <input type="hidden" name="tracked_id" id="untrackTrackedId">
+                <div class="modal-actions">
+                    <button type="submit" class="table-button danger">Αφαίρεση</button>
+                    <button type="button" class="button-link secondary" onclick="closeUntrackModal()">Ακύρωση</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openUntrackModal(id, candidateName) {
+            document.getElementById("untrackTrackedId").value = id;
+            document.getElementById("untrackCandidateName").textContent = candidateName;
+            document.getElementById("untrackModal").classList.add("show");
+        }
+
+        function closeUntrackModal() {
+            document.getElementById("untrackModal").classList.remove("show");
+            document.getElementById("untrackTrackedId").value = "";
+            document.getElementById("untrackCandidateName").textContent = "";
+        }
+
+        window.onclick = function (e) {
+            if (e.target.classList.contains("modal")) {
+                closeUntrackModal();
+            }
+        };
+
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                closeUntrackModal();
+            }
+        });
+    </script>
+</body>
+</html>

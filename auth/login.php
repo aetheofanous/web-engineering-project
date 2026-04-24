@@ -48,11 +48,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Pick up any flash messages queued by logout / register so we can display them.
 $flashMessages = get_flash_messages();
+
+$messages = array_merge(
+    $flashMessages,
+    array_map(
+        function ($error) {
+            return ['type' => 'error', 'message' => $error];
+        },
+        $errors
+    )
+);
+
+if (isset($_GET['registered']) && $_GET['registered'] === '1') {
+    $messages[] = [
+        'type' => 'success',
+        'message' => 'Η εγγραφή ολοκληρώθηκε επιτυχώς. Μπορείτε τώρα να συνδεθείτε.',
+    ];
+}
 ?>
 <!DOCTYPE html>
 <html lang="el">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
@@ -60,33 +78,50 @@ $flashMessages = get_flash_messages();
     <div class="auth-container">
         <div class="auth-card narrow">
             <div class="page-banner">
-                <p class="eyebrow">Ασφαλής Πρόσβαση</p>
+                <div class="banner-row-flex">
+                    <p class="eyebrow">Ασφαλής Πρόσβαση</p>
+                    <a class="button-link secondary header-back-link" href="../index.php">
+                        ← Επιστροφή στην Αρχική
+                    </a>
+                </div>
                 <h1 class="auth-title">Είσοδος Χρήστη</h1>
-                <p class="auth-subtitle">Συνδεθείτε για πρόσβαση στο σωστό module του συστήματος.</p>
+                <p class="auth-subtitle">Συνδεθείτε στον λογαριασμό σας για να αποκτήσετε πρόσβαση στο σωστό module του συστήματος σύμφωνα με τον ρόλο σας.</p>
             </div>
 
             <div class="page-body">
-                <?php foreach ($flashMessages as $flash): ?>
-                    <div class="message <?php echo e($flash['type']); ?>"><?php echo e($flash['message']); ?></div>
+                <?php foreach ($messages as $message): ?>
+                    <div class="message <?php echo e($message['type']); ?>"><?php echo e($message['message']); ?></div>
                 <?php endforeach; ?>
 
-                <?php if (isset($_GET['registered']) && $_GET['registered'] === '1'): ?>
-                    <div class="message success">Η εγγραφή ολοκληρώθηκε επιτυχώς. Μπορείτε τώρα να συνδεθείτε.</div>
-                <?php endif; ?>
+                <div class="section-card section-card-compact">
+                    <h2 class="section-title">Στοιχεία Σύνδεσης</h2>
+                    <p class="section-text">Χρησιμοποιήστε το email και τον κωδικό που δηλώσατε κατά την εγγραφή σας.</p>
 
-                <?php foreach ($errors as $error): ?>
-                    <div class="message error"><?php echo e($error); ?></div>
-                <?php endforeach; ?>
+                    <form method="post" action="" class="add-specialty-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="email">Ηλεκτρονική Διεύθυνση</label>
+                                <input type="email" name="email" id="email" class="form-input"
+                                       value="<?php echo e($_POST['email'] ?? ''); ?>"
+                                       placeholder="π.χ. user@example.com" required autofocus>
+                                <span class="form-hint">Το email που δηλώθηκε κατά την εγγραφή.</span>
+                            </div>
 
-                <form method="post" action="">
-                    <label for="email">Ηλεκτρονική Διεύθυνση</label>
-                    <input type="email" name="email" id="email" value="<?php echo e($_POST['email'] ?? ''); ?>" required>
+                            <div class="form-group">
+                                <label for="password">Κωδικός Πρόσβασης</label>
+                                <input type="password" name="password" id="password" class="form-input"
+                                       placeholder="Εισαγωγή κωδικού" required>
+                                <span class="form-hint">Τουλάχιστον 8 χαρακτήρες (όπως ορίστηκε στην εγγραφή).</span>
+                            </div>
+                        </div>
 
-                    <label for="password">Κωδικός Πρόσβασης</label>
-                    <input type="password" name="password" id="password" required>
-
-                    <button type="submit">Σύνδεση</button>
-                </form>
+                        <div class="form-actions">
+                            <button type="submit" class="primary-button">
+                                <span class="btn-icon">→</span> Σύνδεση
+                            </button>
+                        </div>
+                    </form>
+                </div>
 
                 <div class="auth-footer">
                     Δεν διαθέτετε λογαριασμό; <a href="register.php">Εγγραφή νέου χρήστη</a>
