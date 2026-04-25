@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $surname = trim($_POST['surname'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
-    $role = trim($_POST['role'] ?? 'candidate');
+    $role = 'candidate';
     $password = $_POST['password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
     $notifyNewLists = isset($_POST['notify_new_lists']) ? 1 : 0;
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Οι κωδικοί δεν ταιριάζουν.';
     }
 
-    if (!in_array($role, ['admin', 'candidate'], true)) {
+    if ($role !== 'candidate') {
         $errors[] = 'Ο ρόλος που επιλέχθηκε δεν επιτρέπεται.';
     }
 
@@ -148,10 +148,8 @@ require __DIR__ . '/../includes/header.php';
 
                 <div class="field field--full">
                     <label for="role">Role</label>
-                    <select id="role" name="role" required>
-                        <option value="candidate" <?php echo (($_POST['role'] ?? 'candidate') === 'candidate') ? 'selected' : ''; ?>>Candidate</option>
-                        <option value="admin" <?php echo (($_POST['role'] ?? '') === 'admin') ? 'selected' : ''; ?>>Admin</option>
-                    </select>
+                    <input type="text" id="role" value="Candidate" disabled>
+                    <input type="hidden" name="role" value="candidate">
                 </div>
 
                 <div class="field field--full">

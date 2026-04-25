@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $phone                  = trim($_POST['phone'] ?? '');
     $password               = $_POST['password'] ?? '';
     $confirmPassword        = $_POST['confirm_password'] ?? '';
-    $role                   = trim($_POST['role'] ?? 'candidate');
+    $role                   = 'candidate';
     $notifyNewLists         = isset($_POST['notify_new_lists']) ? 1 : 0;
     $notifyPositionChanges  = isset($_POST['notify_position_changes']) ? 1 : 0;
     $linkCandidateId        = (int) ($_POST['link_candidate_id'] ?? 0);
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Οι κωδικοί δεν ταιριάζουν.';
     }
 
-    if (!in_array($role, ['admin', 'candidate'], true)) {
+    if ($role !== 'candidate') {
         $errors[] = 'Ο ρόλος που επιλέχθηκε δεν επιτρέπεται.';
     }
 
@@ -232,13 +232,10 @@ $messages = array_map(
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="role">Ρόλος Χρήστη</label>
-                                <select name="role" id="role" class="form-input" required>
-                                    <option value="candidate" <?php echo (($_POST['role'] ?? 'candidate') === 'candidate') ? 'selected' : ''; ?>>Υποψήφιος (Candidate)</option>
-                                    <option value="admin" <?php echo (($_POST['role'] ?? '') === 'admin') ? 'selected' : ''; ?>>Διαχειριστής (Admin)</option>
-                                </select>
-                                <span class="form-hint">Ο ρόλος καθορίζει το module που θα βλέπετε μετά τη σύνδεση.</span>
-                            </div>
+                                <label for="role">User Role</label>
+                                <input type="text" id="role" class="form-input" value="Candidate" disabled>
+                                <input type="hidden" name="role" value="candidate">
+                                <span class="form-hint">Public registration creates candidate accounts only.</span>
                         </div>
                     </div>
 
