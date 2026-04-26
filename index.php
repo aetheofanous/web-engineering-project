@@ -16,112 +16,9 @@ $role = $user['role'] ?? null;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Παρακολούθηση Πινάκων Διοριστέων</title>
     <link rel="stylesheet" href="assets/css/style.css">
-    <style>
-        .landing-hero-links {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-top: 16px;
-        }
-
-        .admin-nav-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 16px;
-        }
-
-        .admin-tile {
-            display: flex !important;
-            align-items: center !important;
-            gap: 16px !important;
-            padding: 22px !important;
-            border: 1px solid #d7e1ea !important;
-            border-radius: 8px !important;
-            background: linear-gradient(180deg, #ffffff 0%, #f6f9fc 100%) !important;
-            text-decoration: none !important;
-            box-shadow: 0 10px 24px rgba(15, 42, 66, 0.08) !important;
-            transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-            color: inherit !important;
-        }
-
-        .admin-tile:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 18px 40px rgba(15, 42, 66, 0.15) !important;
-        }
-
-        .admin-tile.is-disabled {
-            opacity: 0.55;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-
-        .admin-tile-icon {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 48px !important;
-            height: 48px !important;
-            min-width: 48px !important;
-            max-width: 48px !important;
-            min-height: 48px !important;
-            max-height: 48px !important;
-            flex: 0 0 48px !important;
-            color: #005b96 !important;
-            line-height: 0 !important;
-            overflow: hidden !important;
-        }
-
-        .admin-tile-icon svg {
-            display: block !important;
-            width: 48px !important;
-            height: 48px !important;
-            fill: none !important;
-            stroke: currentColor !important;
-            stroke-width: 1.8 !important;
-            stroke-linecap: round !important;
-            stroke-linejoin: round !important;
-        }
-
-        .admin-tile-content {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 6px !important;
-            text-align: left !important;
-        }
-
-        .admin-tile-title {
-            font-size: 1.15rem !important;
-            font-weight: 700 !important;
-            color: #173650 !important;
-        }
-
-        .admin-tile-text {
-            color: #5d7183 !important;
-            line-height: 1.55 !important;
-            font-size: 0.92rem !important;
-        }
-
-        .admin-tile-badge {
-            display: inline-block;
-            margin-top: 4px;
-            padding: 3px 10px;
-            border-radius: 999px;
-            background: #e3eefb;
-            color: #1f4f82;
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-        }
-
-        .admin-tile-badge.restricted {
-            background: #fde4e4;
-            color: #a03030;
-        }
-    </style>
 </head>
 <body>
+    <?php require __DIR__ . '/includes/app_topbar.php'; ?>
     <div class="auth-container">
         <div class="auth-card">
             <div class="page-banner">
@@ -175,7 +72,7 @@ $role = $user['role'] ?? null;
 
                     <!-- Candidate module -->
                     <?php
-                    $candidateAllowed = in_array($role, ['candidate', 'admin'], true);
+                    $candidateAllowed = ($role === 'candidate');
                     $candidateHref = $candidateAllowed ? 'modules/candidate/dashboard.php' : 'auth/login.php';
                     ?>
                     <a class="admin-tile" href="<?php echo h($candidateHref); ?>">

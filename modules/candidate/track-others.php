@@ -4,7 +4,7 @@
 
 require_once __DIR__ . '/../../includes/bootstrap.php';
 
-$user = require_login(['candidate', 'admin']);
+$user = require_login(['candidate']);
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -92,6 +92,8 @@ $messages = array_merge(
     <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
+    <?php require __DIR__ . '/../../includes/app_topbar.php'; ?>
+    <?php $moduleKey = 'candidate'; $pageKey = 'track-others'; require __DIR__ . '/../../includes/nav.php'; ?>
     <?php require __DIR__ . '/../../includes/notifications_bell.php'; ?>
     <div class="auth-container">
         <div class="auth-card">

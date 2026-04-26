@@ -3,7 +3,7 @@
 // «Το reports είναι μια σελίδα με πίνακες και γραφήματα με συγκεντρωτικά στατιστικά στοιχεία».
 // Uses Chart.js (CDN) to render real graphical charts + accessible HTML fallback bars.
 
-require_once __DIR__ . '/../../includes/functions.php';
+require_once __DIR__ . '/../../includes/bootstrap.php';
 
 require_admin_role('../dashboard.php', '../../auth/login.php');
 
@@ -130,6 +130,8 @@ $chartStatusCounts = array_map(function ($row) {
     </style>
 </head>
 <body>
+    <?php require __DIR__ . '/../../includes/app_topbar.php'; ?>
+    <?php $moduleKey = 'admin'; $pageKey = 'reports'; require __DIR__ . '/../../includes/nav.php'; ?>
     <?php require __DIR__ . '/../../includes/notifications_bell.php'; ?>
     <div class="auth-container">
         <div class="auth-card">

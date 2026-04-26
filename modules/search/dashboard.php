@@ -21,95 +21,10 @@ $stats = $statsQuery->fetch() ?: [];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Dashboard — Public</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
-    <style>
-        .admin-nav-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 16px;
-        }
-
-        .admin-tile {
-            display: flex !important;
-            align-items: center !important;
-            gap: 16px !important;
-            padding: 22px !important;
-            border: 1px solid #d7e1ea !important;
-            border-radius: 8px !important;
-            background: linear-gradient(180deg, #ffffff 0%, #f6f9fc 100%) !important;
-            text-decoration: none !important;
-            box-shadow: 0 10px 24px rgba(15, 42, 66, 0.08) !important;
-            transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-            color: inherit !important;
-        }
-
-        .admin-tile:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 18px 40px rgba(15, 42, 66, 0.15) !important;
-        }
-
-        .admin-tile-icon {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 48px !important;
-            height: 48px !important;
-            min-width: 48px !important;
-            max-width: 48px !important;
-            min-height: 48px !important;
-            max-height: 48px !important;
-            flex: 0 0 48px !important;
-            color: #005b96 !important;
-            line-height: 0 !important;
-            overflow: hidden !important;
-        }
-
-        .admin-tile-icon svg {
-            display: block !important;
-            width: 48px !important;
-            height: 48px !important;
-            fill: none !important;
-            stroke: currentColor !important;
-            stroke-width: 1.8 !important;
-            stroke-linecap: round !important;
-            stroke-linejoin: round !important;
-        }
-
-        .admin-tile-icon svg path,
-        .admin-tile-icon svg circle,
-        .admin-tile-icon svg line,
-        .admin-tile-icon svg polyline,
-        .admin-tile-icon svg rect {
-            fill: none !important;
-            stroke: currentColor !important;
-        }
-
-        .admin-tile-content {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 4px !important;
-            text-align: left !important;
-        }
-
-        .admin-tile-title,
-        .admin-tile-text {
-            display: block !important;
-            text-decoration: none !important;
-        }
-
-        .admin-tile-title {
-            font-size: 1.15rem !important;
-            font-weight: 700 !important;
-            color: #173650 !important;
-        }
-
-        .admin-tile-text {
-            color: #5d7183 !important;
-            line-height: 1.6 !important;
-        }
-    </style>
 </head>
 <body>
+    <?php require __DIR__ . '/../../includes/app_topbar.php'; ?>
+    <?php $moduleKey = 'search'; $pageKey = 'dashboard'; require __DIR__ . '/../../includes/nav.php'; ?>
     <div class="auth-container">
         <div class="auth-card">
             <div class="page-banner">

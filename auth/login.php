@@ -75,6 +75,7 @@ if (isset($_GET['registered']) && $_GET['registered'] === '1') {
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
+    <?php require __DIR__ . '/../includes/app_topbar.php'; ?>
     <div class="auth-container">
         <div class="auth-card narrow">
             <div class="page-banner">

@@ -7,8 +7,8 @@ $pageTitle = 'API Module';
 $pageSubtitle = 'Συγκεντρωτική τεκμηρίωση των JSON endpoints για το Postman demo της παρουσίασης.';
 $moduleKey = 'api';
 $pageKey = 'dashboard';
-$showTopbar = false;
-$showModuleNav = false;
+$showTopbar = true;
+$showModuleNav = true;
 $showHero = false;
 $heroStats = [
     ['value' => 6, 'label' => 'Core Endpoints'],

@@ -113,7 +113,7 @@ $vizPointsCounts = array_values($vizPointsBuckets);
             margin-top: 12px;
         }
         .search-viz-card {
-            background: linear-gradient(180deg, #ffffff 0%, #f6f9fc 100%);
+            background: #ffffff;
             border: 1px solid #d7e1ea;
             border-radius: 8px;
             padding: 18px;
@@ -141,6 +141,8 @@ $vizPointsCounts = array_values($vizPointsBuckets);
     </style>
 </head>
 <body>
+    <?php require __DIR__ . '/../../includes/app_topbar.php'; ?>
+    <?php $moduleKey = 'search'; $pageKey = 'search'; require __DIR__ . '/../../includes/nav.php'; ?>
     <div class="auth-container">
         <div class="auth-card">
             <div class="page-banner">

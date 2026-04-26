@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../includes/functions.php';
+require_once __DIR__ . '/../../includes/bootstrap.php';
 
 require_admin_role('../dashboard.php', '../../auth/login.php');
 
@@ -264,6 +264,8 @@ $messages = array_merge(
     });
 </script>
 <body>
+    <?php require __DIR__ . '/../../includes/app_topbar.php'; ?>
+    <?php $moduleKey = 'admin'; $pageKey = 'manage_lists'; require __DIR__ . '/../../includes/nav.php'; ?>
     <?php require __DIR__ . '/../../includes/notifications_bell.php'; ?>
     <div class="auth-container">
         <div class="auth-card">

@@ -150,6 +150,7 @@ $messages = array_map(
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
+    <?php require __DIR__ . '/../includes/app_topbar.php'; ?>
     <div class="auth-container">
         <div class="auth-card">
             <div class="page-banner">
@@ -236,6 +237,7 @@ $messages = array_map(
                                 <input type="text" id="role" class="form-input" value="Candidate" disabled>
                                 <input type="hidden" name="role" value="candidate">
                                 <span class="form-hint">Public registration creates candidate accounts only.</span>
+                            </div>
                         </div>
                     </div>
 

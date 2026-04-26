@@ -128,7 +128,7 @@ $totalYears = count($byYear);
         }
 
         .stats-chart-card {
-            background: linear-gradient(180deg, #ffffff 0%, #f6f9fc 100%);
+            background: #ffffff;
             border: 1px solid #d7e1ea;
             border-radius: 8px;
             padding: 18px;
@@ -174,7 +174,7 @@ $totalYears = count($byYear);
             overflow: hidden;
         }
         .bar-row__fill {
-            background: linear-gradient(90deg, #005b96, #0077c2);
+            background: #005ea8;
             height: 100%;
             border-radius: 999px;
             transition: width 0.4s ease;
@@ -182,6 +182,8 @@ $totalYears = count($byYear);
     </style>
 </head>
 <body>
+    <?php require __DIR__ . '/../../includes/app_topbar.php'; ?>
+    <?php $moduleKey = 'search'; $pageKey = 'statistics'; require __DIR__ . '/../../includes/nav.php'; ?>
     <div class="auth-container">
         <div class="auth-card">
             <div class="page-banner">

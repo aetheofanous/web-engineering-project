@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../includes/functions.php';
+require_once __DIR__ . '/../../includes/bootstrap.php';
 
 require_admin_role('../dashboard.php', '../../auth/login.php');
 
@@ -25,95 +25,10 @@ if ($displayName === '') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
-    <style>
-        .admin-nav-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 16px;
-        }
-
-        .admin-tile {
-            display: flex !important;
-            align-items: center !important;
-            gap: 16px !important;
-            padding: 22px !important;
-            border: 1px solid #d7e1ea !important;
-            border-radius: 8px !important;
-            background: linear-gradient(180deg, #ffffff 0%, #f6f9fc 100%) !important;
-            text-decoration: none !important;
-            box-shadow: 0 10px 24px rgba(15, 42, 66, 0.08) !important;
-            transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-            color: inherit !important;
-        }
-
-        .admin-tile:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 18px 40px rgba(15, 42, 66, 0.15) !important;
-        }
-
-        .admin-tile-icon {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 48px !important;
-            height: 48px !important;
-            min-width: 48px !important;
-            max-width: 48px !important;
-            min-height: 48px !important;
-            max-height: 48px !important;
-            flex: 0 0 48px !important;
-            color: #005b96 !important;
-            line-height: 0 !important;
-            overflow: hidden !important;
-        }
-
-        .admin-tile-icon svg {
-            display: block !important;
-            width: 48px !important;
-            height: 48px !important;
-            fill: none !important;
-            stroke: currentColor !important;
-            stroke-width: 1.8 !important;
-            stroke-linecap: round !important;
-            stroke-linejoin: round !important;
-        }
-
-        .admin-tile-icon svg path,
-        .admin-tile-icon svg circle,
-        .admin-tile-icon svg line,
-        .admin-tile-icon svg polyline,
-        .admin-tile-icon svg rect {
-            fill: none !important;
-            stroke: currentColor !important;
-        }
-
-        .admin-tile-content {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 4px !important;
-            text-align: left !important;
-        }
-
-        .admin-tile-title,
-        .admin-tile-text {
-            display: block !important;
-            text-decoration: none !important;
-        }
-
-        .admin-tile-title {
-            font-size: 1.15rem !important;
-            font-weight: 700 !important;
-            color: #173650 !important;
-        }
-
-        .admin-tile-text {
-            color: #5d7183 !important;
-            line-height: 1.6 !important;
-        }
-    </style>
 </head>
 <body>
+    <?php require __DIR__ . '/../../includes/app_topbar.php'; ?>
+    <?php $moduleKey = 'admin'; $pageKey = 'dashboard'; require __DIR__ . '/../../includes/nav.php'; ?>
     <?php require __DIR__ . '/../../includes/notifications_bell.php'; ?>
     <div class="auth-container">
         <div class="auth-card">
@@ -198,21 +113,10 @@ if ($displayName === '') {
                         </div>
                     </a>
 
-                    <a class="admin-tile" href="profile.php">
-                        <span class="admin-tile-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" width="48" height="48" role="img" focusable="false">
-                                <path d="M20 21c0-3.31-3.58-6-8-6s-8 2.69-8 6"></path>
-                                <circle cx="12" cy="8" r="5"></circle>
-                            </svg>
-                        </span>
-                        <div class="admin-tile-content">
-                            <span class="admin-tile-title">My Profile</span>
-                            <span class="admin-tile-text">Αλλαγή προσωπικών στοιχείων και κωδικού πρόσβασης.</span>
-                        </div>
-                    </a>
                 </div>
 
                 <div class="dashboard-links">
+                    <a href="profile.php" class="button-link secondary">My Profile</a>
                     <a href="../list.php" class="button-link secondary">Προβολή Καταλόγων</a>
                     <a href="../../auth/logout.php" class="button-link danger-link">Αποσύνδεση</a>
                 </div>

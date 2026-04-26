@@ -3,7 +3,7 @@
 
 require_once __DIR__ . '/../../includes/bootstrap.php';
 
-$user = require_login(['candidate', 'admin']);
+$user = require_login(['candidate']);
 
 // Gather summary counts for the stat cards. PDO is configured with
 // ATTR_EMULATE_PREPARES = false, so each named placeholder must appear only
@@ -36,157 +36,10 @@ if ($username === '') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Candidate Dashboard</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
-    <style>
-        .admin-nav-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 16px;
-        }
-
-        .admin-tile {
-            display: flex !important;
-            align-items: center !important;
-            gap: 16px !important;
-            padding: 22px !important;
-            border: 1px solid #d7e1ea !important;
-            border-radius: 8px !important;
-            background: linear-gradient(180deg, #ffffff 0%, #f6f9fc 100%) !important;
-            text-decoration: none !important;
-            box-shadow: 0 10px 24px rgba(15, 42, 66, 0.08) !important;
-            transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-            color: inherit !important;
-        }
-
-        .admin-tile:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 18px 40px rgba(15, 42, 66, 0.15) !important;
-        }
-
-        .admin-tile-icon {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 48px !important;
-            height: 48px !important;
-            min-width: 48px !important;
-            max-width: 48px !important;
-            min-height: 48px !important;
-            max-height: 48px !important;
-            flex: 0 0 48px !important;
-            color: #005b96 !important;
-            line-height: 0 !important;
-            overflow: hidden !important;
-        }
-
-        .admin-tile-icon svg {
-            display: block !important;
-            width: 48px !important;
-            height: 48px !important;
-            fill: none !important;
-            stroke: currentColor !important;
-            stroke-width: 1.8 !important;
-            stroke-linecap: round !important;
-            stroke-linejoin: round !important;
-        }
-
-        .admin-tile-icon svg path,
-        .admin-tile-icon svg circle,
-        .admin-tile-icon svg line,
-        .admin-tile-icon svg polyline,
-        .admin-tile-icon svg rect {
-            fill: none !important;
-            stroke: currentColor !important;
-        }
-
-        .admin-tile-content {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 4px !important;
-            text-align: left !important;
-        }
-
-        .admin-tile-title,
-        .admin-tile-text {
-            display: block !important;
-            text-decoration: none !important;
-        }
-
-        .admin-tile-title {
-            font-size: 1.15rem !important;
-            font-weight: 700 !important;
-            color: #173650 !important;
-        }
-
-        .admin-tile-text {
-            color: #5d7183 !important;
-            line-height: 1.6 !important;
-        }
-
-        .notifications-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .notification-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 14px;
-            padding: 16px 18px;
-            border: 1px solid #d7e1ea;
-            border-radius: 8px;
-            background: #ffffff;
-        }
-
-        .notification-item.is-unread {
-            background: linear-gradient(180deg, #f0f7ff 0%, #ffffff 100%);
-            border-color: #b7d3ef;
-        }
-
-        .notification-badge {
-            flex: 0 0 auto;
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            background: #e3eefb;
-            color: #1f4f82;
-        }
-
-        .notification-badge.is-unread {
-            background: #ffe5b4;
-            color: #8a5a00;
-        }
-
-        .notification-content {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .notification-date {
-            font-size: 0.82rem;
-            color: #5d7183;
-        }
-
-        .notification-message {
-            color: #173650;
-            line-height: 1.5;
-        }
-
-        .empty-notifications {
-            padding: 18px 20px;
-            border: 1px dashed #b7c4d2;
-            border-radius: 8px;
-            color: #5d7183;
-            background: #f8fafc;
-        }
-    </style>
 </head>
 <body>
+    <?php require __DIR__ . '/../../includes/app_topbar.php'; ?>
+    <?php $moduleKey = 'candidate'; $pageKey = 'dashboard'; require __DIR__ . '/../../includes/nav.php'; ?>
     <?php require __DIR__ . '/../../includes/notifications_bell.php'; ?>
     <div class="auth-container">
         <div class="auth-card">
