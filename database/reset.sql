@@ -101,13 +101,20 @@ CREATE TABLE applications (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
   candidate_id INT NOT NULL,
+  verification_status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+  verification_notes TEXT DEFAULT NULL,
   linked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  verified_at TIMESTAMP NULL DEFAULT NULL,
+  verified_by INT DEFAULT NULL,
   CONSTRAINT fk_applications_user
     FOREIGN KEY (user_id) REFERENCES users(id)
     ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_applications_candidate
     FOREIGN KEY (candidate_id) REFERENCES candidates(id)
     ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_applications_verified_by
+    FOREIGN KEY (verified_by) REFERENCES users(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
   UNIQUE KEY uq_applications_user_candidate (user_id, candidate_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -180,9 +187,11 @@ INSERT INTO users (
   (2, 'Eleni',   'Demo', 'eleni@example.com',   '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '22000002', 'candidate', 1, 1),
   (3, 'Andreas', 'Demo', 'andreas@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '22000003', 'candidate', 0, 1);
 
-INSERT INTO applications (id, user_id, candidate_id) VALUES
-  (1, 2, 6),
-  (2, 3, 2);
+INSERT INTO applications (
+  id, user_id, candidate_id, verification_status, verification_notes, verified_at, verified_by
+) VALUES
+  (1, 2, 6, 'approved', 'Demo approved link.', CURRENT_TIMESTAMP, 1),
+  (2, 3, 2, 'approved', 'Demo approved link.', CURRENT_TIMESTAMP, 1);
 
 INSERT INTO tracked_candidates (id, user_id, candidate_id) VALUES
   (1, 2, 1),

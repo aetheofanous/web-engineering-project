@@ -18,6 +18,7 @@ $appConfig = [
         'admin' => [
             ['key' => 'dashboard', 'label' => 'Dashboard', 'path' => 'modules/admin/dashboard.php'],
             ['key' => 'manage_users', 'label' => 'Manage Users', 'path' => 'modules/admin/manage_users.php'],
+            ['key' => 'verify_applications', 'label' => 'Verify Links', 'path' => 'modules/admin/verify_applications.php'],
             ['key' => 'manage_lists', 'label' => 'Manage Lists', 'path' => 'modules/admin/manage_lists.php'],
             ['key' => 'reports', 'label' => 'Reports', 'path' => 'modules/admin/reports.php'],
             ['key' => 'profile', 'label' => 'My Profile', 'path' => 'modules/admin/profile.php'],

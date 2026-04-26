@@ -71,13 +71,20 @@ CREATE TABLE applications (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
   candidate_id INT NOT NULL,
+  verification_status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+  verification_notes TEXT DEFAULT NULL,
   linked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  verified_at TIMESTAMP NULL DEFAULT NULL,
+  verified_by INT DEFAULT NULL,
   CONSTRAINT fk_applications_user
     FOREIGN KEY (user_id) REFERENCES users(id)
     ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_applications_candidate
     FOREIGN KEY (candidate_id) REFERENCES candidates(id)
     ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_applications_verified_by
+    FOREIGN KEY (verified_by) REFERENCES users(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
   UNIQUE KEY uq_applications_user_candidate (user_id, candidate_id)
 ) ENGINE=InnoDB;
 

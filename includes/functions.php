@@ -537,3 +537,83 @@ function ensure_specialty_management_schema(PDO $pdo) {
         );
     }
 }
+
+function ensure_application_verification_schema(PDO $pdo): void
+{
+    $statusColumn = $pdo->query("SHOW COLUMNS FROM applications LIKE 'verification_status'")->fetch();
+    if (!$statusColumn) {
+        $pdo->exec(
+            "ALTER TABLE applications
+             ADD COLUMN verification_status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending'
+             AFTER candidate_id"
+        );
+    }
+
+    $notesColumn = $pdo->query("SHOW COLUMNS FROM applications LIKE 'verification_notes'")->fetch();
+    if (!$notesColumn) {
+        $pdo->exec(
+            "ALTER TABLE applications
+             ADD COLUMN verification_notes TEXT DEFAULT NULL
+             AFTER verification_status"
+        );
+    }
+
+    $verifiedAtColumn = $pdo->query("SHOW COLUMNS FROM applications LIKE 'verified_at'")->fetch();
+    if (!$verifiedAtColumn) {
+        $pdo->exec(
+            "ALTER TABLE applications
+             ADD COLUMN verified_at TIMESTAMP NULL DEFAULT NULL
+             AFTER linked_at"
+        );
+    }
+
+    $verifiedByColumn = $pdo->query("SHOW COLUMNS FROM applications LIKE 'verified_by'")->fetch();
+    if (!$verifiedByColumn) {
+        $pdo->exec(
+            "ALTER TABLE applications
+             ADD COLUMN verified_by INT DEFAULT NULL
+             AFTER verified_at"
+        );
+    }
+
+    $fkExists = $pdo->query(
+        "SELECT CONSTRAINT_NAME
+         FROM information_schema.TABLE_CONSTRAINTS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'applications'
+           AND CONSTRAINT_NAME = 'fk_applications_verified_by'"
+    )->fetch();
+
+    if (!$fkExists) {
+        $pdo->exec(
+            "ALTER TABLE applications
+             ADD CONSTRAINT fk_applications_verified_by
+             FOREIGN KEY (verified_by) REFERENCES users(id)
+             ON DELETE SET NULL ON UPDATE CASCADE"
+        );
+    }
+}
+
+function application_status_label(string $status): string
+{
+    switch ($status) {
+        case 'approved':
+            return 'Approved';
+        case 'rejected':
+            return 'Rejected';
+        default:
+            return 'Pending';
+    }
+}
+
+function application_status_class(string $status): string
+{
+    switch ($status) {
+        case 'approved':
+            return 'admin';
+        case 'rejected':
+            return 'candidate';
+        default:
+            return 'search';
+    }
+}

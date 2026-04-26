@@ -39,9 +39,11 @@ INSERT INTO users (
   (2, 'Eleni', 'Demo', 'eleni@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '22000002', 'candidate', 1, 1),
   (3, 'Andreas', 'Demo', 'andreas@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '22000003', 'candidate', 0, 1);
 
-INSERT INTO applications (id, user_id, candidate_id) VALUES
-  (1, 2, 6),
-  (2, 3, 2);
+INSERT INTO applications (
+  id, user_id, candidate_id, verification_status, verification_notes, verified_at, verified_by
+) VALUES
+  (1, 2, 6, 'approved', 'Demo approved link.', CURRENT_TIMESTAMP, 1),
+  (2, 3, 2, 'approved', 'Demo approved link.', CURRENT_TIMESTAMP, 1);
 
 INSERT INTO tracked_candidates (id, user_id, candidate_id) VALUES
   (1, 2, 1),

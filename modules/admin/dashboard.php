@@ -5,12 +5,14 @@ require_admin_role('../dashboard.php', '../../auth/login.php');
 
 $pdo = require __DIR__ . '/../../includes/db.php';
 ensure_specialty_management_schema($pdo);
+ensure_application_verification_schema($pdo);
 
 $stats = [
     'users' => (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn(),
     'lists' => (int) $pdo->query('SELECT COUNT(*) FROM lists')->fetchColumn(),
     'candidates' => (int) $pdo->query('SELECT COUNT(*) FROM candidates')->fetchColumn(),
     'active_specialties' => (int) $pdo->query('SELECT COUNT(*) FROM specialties WHERE is_active = 1')->fetchColumn(),
+    'pending_verifications' => (int) $pdo->query("SELECT COUNT(*) FROM applications WHERE verification_status = 'pending'")->fetchColumn(),
 ];
 $currentAdmin = current_user() ?? [];
 $displayName = trim(($currentAdmin['name'] ?? '') . ' ' . ($currentAdmin['surname'] ?? ''));
@@ -35,7 +37,7 @@ if ($displayName === '') {
             <div class="page-banner">
                 <p class="eyebrow">Διαχείριση Συστήματος</p>
                 <h1 class="auth-title">Admin Dashboard</h1>
-                <p class="auth-subtitle">Ο πίνακας του διαχειριστή συγκεντρώνει τις βασικές λειτουργίες εποπτείας του συστήματος, με άμεση πρόσβαση σε χρήστες, πίνακες και αναφορές.</p>
+                <p class="auth-subtitle">Ο πίνακας του διαχειριστή συγκεντρώνει τις βασικές λειτουργίες εποπτείας του συστήματος, με άμεση πρόσβαση σε χρήστες, πίνακες, reports και verification requests.</p>
                 <p class="section-text">Καλώς ήρθες, <?php echo h($displayName); ?></p>
                 <p class="field-help">Επίλεξε μια ενότητα για να ξεκινήσεις τη διαχείριση.</p>
             </div>
@@ -61,6 +63,11 @@ if ($displayName === '') {
                         <h3><?php echo (int) $stats['active_specialties']; ?></h3>
                         <p>Ειδικότητες</p>
                     </div>
+
+                    <div class="stat-card">
+                        <h3><?php echo (int) $stats['pending_verifications']; ?></h3>
+                        <p>Pending Verifications</p>
+                    </div>
                 </div>
 
                 <div class="section-divider"></div>
@@ -79,6 +86,19 @@ if ($displayName === '') {
                         <div class="admin-tile-content">
                             <span class="admin-tile-title">Manage Users</span>
                             <span class="admin-tile-text">Προβολή, προσθήκη, ενημέρωση και διαγραφή χρηστών.</span>
+                        </div>
+                    </a>
+
+                    <a class="admin-tile" href="verify_applications.php">
+                        <span class="admin-tile-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="48" height="48" role="img" focusable="false">
+                                <path d="M12 2 4 5v6c0 5 3.5 9.5 8 11 4.5-1.5 8-6 8-11V5l-8-3Z"></path>
+                                <path d="m9 12 2 2 4-4"></path>
+                            </svg>
+                        </span>
+                        <div class="admin-tile-content">
+                            <span class="admin-tile-title">Verify Links</span>
+                            <span class="admin-tile-text">Έγκριση ή απόρριψη αιτημάτων σύνδεσης χρήστη με υποψήφιο.</span>
                         </div>
                     </a>
 
@@ -112,7 +132,6 @@ if ($displayName === '') {
                             <span class="admin-tile-text">Συγκεντρωτικά στατιστικά και γραφική απεικόνιση των δεδομένων.</span>
                         </div>
                     </a>
-
                 </div>
 
                 <div class="dashboard-links">

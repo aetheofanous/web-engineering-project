@@ -1,10 +1,10 @@
 <?php
-// Track My Applications — rewritten to match the admin module styling
-// (auth-container > auth-card, page-banner, section-card, table-wrap, modal).
-
 require_once __DIR__ . '/../../includes/bootstrap.php';
 
 $user = require_login(['candidate']);
+$pdo = pdo();
+ensure_application_verification_schema($pdo);
+
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -17,35 +17,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Επιλέξτε υποψήφιο για σύνδεση.';
         } else {
             try {
-                $checkStatement = pdo()->prepare(
+                $checkStatement = $pdo->prepare(
                     'SELECT id FROM applications WHERE user_id = :user_id AND candidate_id = :candidate_id LIMIT 1'
                 );
                 $checkStatement->execute([
-                    'user_id'      => $user['id'],
+                    'user_id' => $user['id'],
                     'candidate_id' => $candidateId,
                 ]);
 
                 if (!$checkStatement->fetch()) {
-                    $insertStatement = pdo()->prepare(
-                        'INSERT INTO applications (user_id, candidate_id)
-                         VALUES (:user_id, :candidate_id)'
+                    $insertStatement = $pdo->prepare(
+                        'INSERT INTO applications (user_id, candidate_id, verification_status)
+                         VALUES (:user_id, :candidate_id, :verification_status)'
                     );
                     $insertStatement->execute([
-                        'user_id'      => $user['id'],
+                        'user_id' => $user['id'],
                         'candidate_id' => $candidateId,
+                        'verification_status' => 'pending',
                     ]);
 
-                    $candidateOptions = fetch_candidate_options();
-                    foreach ($candidateOptions as $option) {
+                    foreach (fetch_candidate_options() as $option) {
                         if ((int) $option['id'] === $candidateId) {
-                            create_notification($user['id'], notification_message_for_link($option));
+                            create_notification(
+                                $user['id'],
+                                'Your candidate-link request was submitted and is waiting for admin verification.'
+                            );
+                            notify_all_admins(sprintf(
+                                'Candidate verification request from user ID %d for %s %s (%s %s).',
+                                $user['id'],
+                                $option['name'],
+                                $option['surname'],
+                                $option['specialty_name'],
+                                $option['year']
+                            ));
                             break;
                         }
                     }
 
-                    add_flash('success', 'Η αίτηση συνδέθηκε με το προφίλ σας.');
+                    add_flash('success', 'The verification request was submitted and is waiting for admin approval.');
                 } else {
-                    add_flash('info', 'Η αίτηση είναι ήδη συνδεδεμένη με το προφίλ σας.');
+                    add_flash('info', 'This candidate is already linked to your profile.');
                 }
 
                 redirect_to('modules/candidate/my-applications.php');
@@ -61,12 +72,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($applicationId > 0) {
             try {
-                $statement = pdo()->prepare(
+                $statement = $pdo->prepare(
                     'DELETE FROM applications
                      WHERE id = :id AND user_id = :user_id'
                 );
                 $statement->execute([
-                    'id'      => $applicationId,
+                    'id' => $applicationId,
                     'user_id' => $user['id'],
                 ]);
                 add_flash('success', 'Η σύνδεση αίτησης αφαιρέθηκε.');
@@ -81,8 +92,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $candidateOptions = fetch_candidate_options();
 
-$applicationsStatement = pdo()->prepare(
-    'SELECT applications.id, applications.linked_at,
+$applicationsStatement = $pdo->prepare(
+    'SELECT applications.id, applications.linked_at, applications.verification_status,
+            applications.verification_notes, applications.verified_at,
             candidates.id AS candidate_id,
             candidates.name, candidates.surname, candidates.position, candidates.points,
             candidates.specialty_id,
@@ -96,16 +108,16 @@ $applicationsStatement = pdo()->prepare(
 );
 $applicationsStatement->execute(['user_id' => $user['id']]);
 $applications = $applicationsStatement->fetchAll();
+$approvedApplications = array_values(array_filter($applications, function ($application) {
+    return ($application['verification_status'] ?? 'pending') === 'approved';
+}));
 
-// --- Timeline: find every appearance of each linked candidate (by name+surname+specialty)
-// --- across all years so we can plot position/points over time.
 $timelineSeries = [];
 $comparativeRows = [];
 $specialtyAverages = [];
 
-if ($applications !== []) {
-    // Pre-compute averages per (specialty_id, year)
-    $avgStatement = pdo()->query(
+if ($approvedApplications !== []) {
+    $avgStatement = $pdo->query(
         'SELECT c.specialty_id, l.year, ROUND(AVG(c.points), 2) AS avg_points, ROUND(AVG(c.position), 1) AS avg_position
          FROM candidates c
          INNER JOIN lists l ON l.id = c.list_id
@@ -113,7 +125,7 @@ if ($applications !== []) {
     );
     foreach ($avgStatement->fetchAll() as $row) {
         $specialtyAverages[$row['specialty_id'] . '|' . $row['year']] = [
-            'avg_points'   => (float) $row['avg_points'],
+            'avg_points' => (float) $row['avg_points'],
             'avg_position' => (float) $row['avg_position'],
         ];
     }
@@ -121,8 +133,8 @@ if ($applications !== []) {
     $palette = ['#005b96', '#5fb55f', '#d55e00', '#b84d4d', '#7a5ca0', '#c8a600'];
     $colorIdx = 0;
 
-    foreach ($applications as $app) {
-        $historyStatement = pdo()->prepare(
+    foreach ($approvedApplications as $app) {
+        $historyStatement = $pdo->prepare(
             'SELECT lists.year, candidates.position, candidates.points
              FROM candidates
              INNER JOIN lists ON lists.id = candidates.list_id
@@ -132,8 +144,8 @@ if ($applications !== []) {
              ORDER BY lists.year ASC'
         );
         $historyStatement->execute([
-            'name'         => $app['name'],
-            'surname'      => $app['surname'],
+            'name' => $app['name'],
+            'surname' => $app['surname'],
             'specialty_id' => $app['specialty_id'],
         ]);
         $history = $historyStatement->fetchAll();
@@ -143,21 +155,21 @@ if ($applications !== []) {
         $colorIdx++;
 
         $timelineSeries[] = [
-            'label'      => $seriesLabel,
-            'color'      => $color,
-            'years'      => array_map(function ($h) { return (int) $h['year']; }, $history),
-            'positions'  => array_map(function ($h) { return (int) $h['position']; }, $history),
-            'points'     => array_map(function ($h) { return $h['points'] !== null ? (float) $h['points'] : null; }, $history),
+            'label' => $seriesLabel,
+            'color' => $color,
+            'years' => array_map(function ($h) { return (int) $h['year']; }, $history),
+            'positions' => array_map(function ($h) { return (int) $h['position']; }, $history),
+            'points' => array_map(function ($h) { return $h['points'] !== null ? (float) $h['points'] : null; }, $history),
         ];
 
         $key = $app['specialty_id'] . '|' . $app['year'];
         $avg = $specialtyAverages[$key] ?? ['avg_points' => 0, 'avg_position' => 0];
         $comparativeRows[] = [
-            'label'        => $seriesLabel,
-            'year'         => (int) $app['year'],
-            'my_points'    => $app['points'] !== null ? (float) $app['points'] : 0,
-            'avg_points'   => (float) $avg['avg_points'],
-            'my_position'  => (int) $app['position'],
+            'label' => $seriesLabel,
+            'year' => (int) $app['year'],
+            'my_points' => $app['points'] !== null ? (float) $app['points'] : 0,
+            'avg_points' => (float) $avg['avg_points'],
+            'my_position' => (int) $app['position'],
             'avg_position' => (float) $avg['avg_position'],
         ];
     }
@@ -182,74 +194,16 @@ $messages = array_merge(
     <link rel="stylesheet" href="../../assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
-        .timeline-list {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            margin: 8px 0 0;
-        }
-
-        .timeline-item {
-            display: grid;
-            grid-template-columns: 160px 1fr;
-            gap: 14px;
-            align-items: center;
-            padding: 14px;
-            border: 1px solid #dde5ee;
-            border-left: 4px solid #005b96;
-            border-radius: 6px;
-            background: #f9fbfd;
-        }
-
-        .timeline-item.is-latest {
-            border-left-color: #d55e00;
-            background: #fff8f1;
-        }
-
-        .timeline-year {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #173650;
-            text-align: center;
-        }
-
-        .timeline-body {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            color: #44566a;
-            font-size: 0.95rem;
-        }
-
-        .timeline-body strong {
-            color: #173650;
-        }
-
-        .viz-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 16px;
-            margin: 12px 0;
-        }
-
-        .viz-card {
-            background: #ffffff;
-            border: 1px solid #d7e1ea;
-            border-radius: 8px;
-            padding: 18px;
-            box-shadow: 0 4px 14px rgba(15, 42, 66, 0.05);
-        }
-
-        .viz-card h3 {
-            margin: 0 0 12px 0;
-            font-size: 1.02rem;
-            color: #173650;
-        }
-
-        .viz-card .chart-canvas-wrap {
-            position: relative;
-            height: 260px;
-        }
+        .timeline-list { display: flex; flex-direction: column; gap: 14px; margin: 8px 0 0; }
+        .timeline-item { display: grid; grid-template-columns: 160px 1fr; gap: 14px; align-items: center; padding: 14px; border: 1px solid #dde5ee; border-left: 4px solid #005b96; border-radius: 6px; background: #f9fbfd; }
+        .timeline-item.is-latest { border-left-color: #d55e00; background: #fff8f1; }
+        .timeline-year { font-size: 1.8rem; font-weight: 700; color: #173650; text-align: center; }
+        .timeline-body { display: flex; flex-direction: column; gap: 4px; color: #44566a; font-size: 0.95rem; }
+        .timeline-body strong { color: #173650; }
+        .viz-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin: 12px 0; }
+        .viz-card { background: #ffffff; border: 1px solid #d7e1ea; border-radius: 8px; padding: 18px; box-shadow: 0 4px 14px rgba(15, 42, 66, 0.05); }
+        .viz-card h3 { margin: 0 0 12px 0; font-size: 1.02rem; color: #173650; }
+        .viz-card .chart-canvas-wrap { position: relative; height: 260px; }
     </style>
 </head>
 <body>
@@ -261,9 +215,7 @@ $messages = array_merge(
             <div class="page-banner">
                 <div class="banner-row-flex">
                     <p class="eyebrow">Candidate Module</p>
-                    <a class="button-link secondary header-back-link" href="dashboard.php">
-                        ← Επιστροφή στο Candidate Dashboard
-                    </a>
+                    <a class="button-link secondary header-back-link" href="dashboard.php">← Επιστροφή στο Candidate Dashboard</a>
                 </div>
                 <h1 class="auth-title">Track My Applications</h1>
                 <p class="auth-subtitle">Συνδέστε το προφίλ σας με υποψήφιο σε επίσημο πίνακα διοριστέων και παρακολουθήστε όλες τις αιτήσεις σας σε ένα σημείο.</p>
@@ -276,11 +228,10 @@ $messages = array_merge(
 
                 <div class="section-card section-card-compact">
                     <h2 class="section-title">Σύνδεση με Υποψήφιο</h2>
-                    <p class="section-text">Επιλέξτε από τη λίστα τον υποψήφιο που σας αντιστοιχεί σε κάποιο επίσημο πίνακα. Κάθε νέα σύνδεση δημιουργεί αντίστοιχη ειδοποίηση στο προφίλ σας.</p>
+                    <p class="section-text">Επιλέξτε τον υποψήφιο που σας αντιστοιχεί. Η σύνδεση δεν ενεργοποιείται άμεσα: πρώτα γίνεται verification από admin.</p>
 
                     <form method="post" action="" class="add-specialty-form">
                         <input type="hidden" name="action" value="link">
-
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="candidate_id">Επιλογή Υποψηφίου</label>
@@ -292,13 +243,13 @@ $messages = array_merge(
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <span class="form-hint">Εμφανίζονται όλοι οι υποψήφιοι από τους διαθέσιμους πίνακες, ταξινομημένοι ανά έτος και ειδικότητα.</span>
+                                <span class="form-hint">Το αίτημα θα σταλεί στον admin για έλεγχο.</span>
                             </div>
                         </div>
 
                         <div class="form-actions">
                             <button type="submit" class="primary-button">
-                                <span class="btn-icon">+</span> Σύνδεση Αίτησης
+                                <span class="btn-icon">+</span> Υποβολή Αιτήματος
                             </button>
                         </div>
                     </form>
@@ -320,6 +271,7 @@ $messages = array_merge(
                                     <th>Έτος</th>
                                     <th>Θέση</th>
                                     <th>Μόρια</th>
+                                    <th>Status</th>
                                     <th>Συνδέθηκε</th>
                                     <th>Actions</th>
                                 </tr>
@@ -327,7 +279,7 @@ $messages = array_merge(
                             <tbody>
                                 <?php if ($applications === []): ?>
                                     <tr>
-                                        <td colspan="8" class="empty-cell">Δεν υπάρχουν ακόμη συνδεδεμένες αιτήσεις.</td>
+                                        <td colspan="9" class="empty-cell">Δεν υπάρχουν ακόμη συνδεδεμένες αιτήσεις.</td>
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($applications as $application): ?>
@@ -338,6 +290,14 @@ $messages = array_merge(
                                             <td><?php echo h($application['year']); ?></td>
                                             <td><span class="status-badge admin">#<?php echo h($application['position']); ?></span></td>
                                             <td><?php echo h($application['points']); ?></td>
+                                            <td>
+                                                <span class="status-badge <?php echo h(application_status_class($application['verification_status'] ?? 'pending')); ?>">
+                                                    <?php echo h(application_status_label($application['verification_status'] ?? 'pending')); ?>
+                                                </span>
+                                                <?php if (!empty($application['verification_notes'])): ?>
+                                                    <br><small><?php echo h($application['verification_notes']); ?></small>
+                                                <?php endif; ?>
+                                            </td>
                                             <td><?php echo h(date('d/m/Y H:i', strtotime($application['linked_at']))); ?></td>
                                             <td>
                                                 <div class="table-actions">
@@ -355,48 +315,48 @@ $messages = array_merge(
                     </div>
                 </div>
 
-                <?php if ($applications !== []): ?>
-                <div class="section-card section-card-compact">
-                    <h2 class="section-title">Χρονική Εξέλιξη (Timeline)</h2>
-                    <p class="section-text">Η ιστορική πορεία κάθε συνδεδεμένης αίτησης: παρακολουθήστε τη θέση και τα μόρια ανά έτος.</p>
+                <?php if ($approvedApplications !== []): ?>
+                    <div class="section-card section-card-compact">
+                        <h2 class="section-title">Χρονική Εξέλιξη (Timeline)</h2>
+                        <p class="section-text">Η ιστορική πορεία κάθε εγκεκριμένης αίτησης: παρακολουθήστε τη θέση και τα μόρια ανά έτος.</p>
 
-                    <div class="timeline-list">
-                        <?php foreach ($applications as $index => $application): ?>
-                            <div class="timeline-item <?php echo $index === 0 ? 'is-latest' : ''; ?>">
-                                <div class="timeline-year"><?php echo h($application['year']); ?></div>
-                                <div class="timeline-body">
-                                    <span><strong><?php echo h($application['name'] . ' ' . $application['surname']); ?></strong> — <?php echo h($application['specialty_name']); ?></span>
-                                    <span>Θέση <strong>#<?php echo h($application['position']); ?></strong> · Μόρια <strong><?php echo h($application['points'] !== null ? $application['points'] : '-'); ?></strong></span>
-                                    <span style="font-size: 0.85rem; color: #6b7d90;">Συνδέθηκε: <?php echo h(date('d/m/Y H:i', strtotime($application['linked_at']))); ?></span>
+                        <div class="timeline-list">
+                            <?php foreach ($approvedApplications as $index => $application): ?>
+                                <div class="timeline-item <?php echo $index === 0 ? 'is-latest' : ''; ?>">
+                                    <div class="timeline-year"><?php echo h($application['year']); ?></div>
+                                    <div class="timeline-body">
+                                        <span><strong><?php echo h($application['name'] . ' ' . $application['surname']); ?></strong> - <?php echo h($application['specialty_name']); ?></span>
+                                        <span>Θέση <strong>#<?php echo h($application['position']); ?></strong> · Μόρια <strong><?php echo h($application['points'] !== null ? $application['points'] : '-'); ?></strong></span>
+                                        <span style="font-size: 0.85rem; color: #6b7d90;">Εγκρίθηκε ως verified link.</span>
+                                    </div>
                                 </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <div class="section-card section-card-compact">
+                        <h2 class="section-title">Γραφική Απεικόνιση &amp; Σύγκριση</h2>
+                        <p class="section-text">Τα γραφήματα εμφανίζουν μόνο τα approved links, ώστε τα analytics να βασίζονται σε verified data.</p>
+
+                        <div class="viz-grid">
+                            <div class="viz-card">
+                                <h3>Εξέλιξη Θέσης ανά Έτος</h3>
+                                <div class="chart-canvas-wrap"><canvas id="appsTimelinePosition"></canvas></div>
                             </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-
-                <div class="section-card section-card-compact">
-                    <h2 class="section-title">Γραφική Απεικόνιση &amp; Σύγκριση</h2>
-                    <p class="section-text">Διαδραστικά γραφήματα που δείχνουν την εξέλιξη των αιτήσεων σας στο χρόνο και τη σύγκριση με τον μέσο όρο της ειδικότητας.</p>
-
-                    <div class="viz-grid">
-                        <div class="viz-card">
-                            <h3>Εξέλιξη Θέσης ανά Έτος</h3>
-                            <div class="chart-canvas-wrap"><canvas id="appsTimelinePosition"></canvas></div>
-                        </div>
-                        <div class="viz-card">
-                            <h3>Εξέλιξη Μορίων ανά Έτος</h3>
-                            <div class="chart-canvas-wrap"><canvas id="appsTimelinePoints"></canvas></div>
-                        </div>
-                        <div class="viz-card">
-                            <h3>Συγκριτικά: Μόρια vs Μ.Ο. Ειδικότητας</h3>
-                            <div class="chart-canvas-wrap"><canvas id="appsComparativePoints"></canvas></div>
-                        </div>
-                        <div class="viz-card">
-                            <h3>Συγκριτικά: Θέση vs Μ.Ο. Ειδικότητας</h3>
-                            <div class="chart-canvas-wrap"><canvas id="appsComparativePosition"></canvas></div>
+                            <div class="viz-card">
+                                <h3>Εξέλιξη Μορίων ανά Έτος</h3>
+                                <div class="chart-canvas-wrap"><canvas id="appsTimelinePoints"></canvas></div>
+                            </div>
+                            <div class="viz-card">
+                                <h3>Συγκριτικά: Μόρια vs Μ.Ο. Ειδικότητας</h3>
+                                <div class="chart-canvas-wrap"><canvas id="appsComparativePoints"></canvas></div>
+                            </div>
+                            <div class="viz-card">
+                                <h3>Συγκριτικά: Θέση vs Μ.Ο. Ειδικότητας</h3>
+                                <div class="chart-canvas-wrap"><canvas id="appsComparativePosition"></canvas></div>
+                            </div>
                         </div>
                     </div>
-                </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -420,7 +380,7 @@ $messages = array_merge(
         </div>
     </div>
 
-    <?php if ($applications !== []): ?>
+    <?php if ($approvedApplications !== []): ?>
     <script>
     (function () {
         if (typeof Chart === 'undefined') return;
@@ -428,47 +388,46 @@ $messages = array_merge(
         Chart.defaults.color = '#173650';
 
         const timelineSeries = <?php echo json_encode($timelineSeries, JSON_UNESCAPED_UNICODE); ?>;
-        const comparative    = <?php echo json_encode($comparativeRows, JSON_UNESCAPED_UNICODE); ?>;
-
-        // Build union of years for x-axis
+        const comparative = <?php echo json_encode($comparativeRows, JSON_UNESCAPED_UNICODE); ?>;
         const allYearsSet = new Set();
-        timelineSeries.forEach(function (s) {
-            s.years.forEach(function (y) { allYearsSet.add(y); });
+
+        timelineSeries.forEach(function (series) {
+            series.years.forEach(function (year) { allYearsSet.add(year); });
         });
+
         const allYears = Array.from(allYearsSet).sort(function (a, b) { return a - b; });
 
         function alignSeries(series, key) {
-            return allYears.map(function (y) {
-                const idx = series.years.indexOf(y);
+            return allYears.map(function (year) {
+                const idx = series.years.indexOf(year);
                 return idx === -1 ? null : series[key][idx];
             });
         }
 
-        const positionDatasets = timelineSeries.map(function (s) {
+        const positionDatasets = timelineSeries.map(function (series) {
             return {
-                label: s.label,
-                data: alignSeries(s, 'positions'),
-                borderColor: s.color,
-                backgroundColor: s.color + '33',
+                label: series.label,
+                data: alignSeries(series, 'positions'),
+                borderColor: series.color,
+                backgroundColor: series.color + '33',
                 tension: 0.25,
                 pointRadius: 5,
                 spanGaps: true
             };
         });
 
-        const pointsDatasets = timelineSeries.map(function (s) {
+        const pointsDatasets = timelineSeries.map(function (series) {
             return {
-                label: s.label,
-                data: alignSeries(s, 'points'),
-                borderColor: s.color,
-                backgroundColor: s.color + '33',
+                label: series.label,
+                data: alignSeries(series, 'points'),
+                borderColor: series.color,
+                backgroundColor: series.color + '33',
                 tension: 0.25,
                 pointRadius: 5,
                 spanGaps: true
             };
         });
 
-        // Timeline position chart (lower is better → reverse Y axis)
         new Chart(document.getElementById('appsTimelinePosition'), {
             type: 'line',
             data: { labels: allYears, datasets: positionDatasets },
@@ -476,9 +435,7 @@ $messages = array_merge(
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { position: 'bottom' } },
-                scales: {
-                    y: { reverse: true, title: { display: true, text: 'Θέση (χαμηλότερη = καλύτερη)' } }
-                }
+                scales: { y: { reverse: true, title: { display: true, text: 'Θέση (χαμηλότερη = καλύτερη)' } } }
             }
         });
 
@@ -493,23 +450,18 @@ $messages = array_merge(
             }
         });
 
-        // Comparative charts
-        const compLabels = comparative.map(function (c) { return c.label + ' · ' + c.year; });
+        const compLabels = comparative.map(function (item) { return item.label + ' · ' + item.year; });
+
         new Chart(document.getElementById('appsComparativePoints'), {
             type: 'bar',
             data: {
                 labels: compLabels,
                 datasets: [
-                    { label: 'Δικά μου Μόρια',      data: comparative.map(function (c) { return c.my_points; }),  backgroundColor: '#005b96', borderRadius: 4 },
-                    { label: 'Μ.Ο. Ειδικότητας', data: comparative.map(function (c) { return c.avg_points; }), backgroundColor: '#d55e00', borderRadius: 4 }
+                    { label: 'Δικά μου Μόρια', data: comparative.map(function (item) { return item.my_points; }), backgroundColor: '#005b96', borderRadius: 4 },
+                    { label: 'Μ.Ο. Ειδικότητας', data: comparative.map(function (item) { return item.avg_points; }), backgroundColor: '#d55e00', borderRadius: 4 }
                 ]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } },
-                scales: { y: { beginAtZero: true } }
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
         });
 
         new Chart(document.getElementById('appsComparativePosition'), {
@@ -517,8 +469,8 @@ $messages = array_merge(
             data: {
                 labels: compLabels,
                 datasets: [
-                    { label: 'Δική μου Θέση',       data: comparative.map(function (c) { return c.my_position; }),  backgroundColor: '#5fb55f', borderRadius: 4 },
-                    { label: 'Μ.Ο. Θέσης Ειδικότητας', data: comparative.map(function (c) { return c.avg_position; }), backgroundColor: '#b84d4d', borderRadius: 4 }
+                    { label: 'Δική μου Θέση', data: comparative.map(function (item) { return item.my_position; }), backgroundColor: '#5fb55f', borderRadius: 4 },
+                    { label: 'Μ.Ο. Θέσης Ειδικότητας', data: comparative.map(function (item) { return item.avg_position; }), backgroundColor: '#b84d4d', borderRadius: 4 }
                 ]
             },
             options: {

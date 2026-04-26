@@ -1,27 +1,30 @@
 <?php
-// Candidate dashboard — same layout and styling as the admin dashboard.
+// Candidate dashboard â€” same layout and styling as the admin dashboard.
 
 require_once __DIR__ . '/../../includes/bootstrap.php';
 
 $user = require_login(['candidate']);
+$pdo = pdo();
+ensure_application_verification_schema($pdo);
 
-// Gather summary counts for the stat cards. PDO is configured with
-// ATTR_EMULATE_PREPARES = false, so each named placeholder must appear only
-// once per statement — we use three distinct placeholders.
-$countsStatement = pdo()->prepare(
+$countsStatement = $pdo->prepare(
     'SELECT
-        (SELECT COUNT(*) FROM applications WHERE user_id = :uid_apps) AS linked_applications,
+        (SELECT COUNT(*) FROM applications WHERE user_id = :uid_apps AND verification_status = :status_approved) AS linked_applications,
+        (SELECT COUNT(*) FROM applications WHERE user_id = :uid_pending AND verification_status = :status_pending) AS pending_verifications,
         (SELECT COUNT(*) FROM tracked_candidates WHERE user_id = :uid_tracked) AS tracked_people,
         (SELECT COUNT(*) FROM notifications WHERE user_id = :uid_notif AND is_read = 0) AS unread_notifications'
 );
 $countsStatement->execute([
-    'uid_apps'    => $user['id'],
-    'uid_tracked' => $user['id'],
-    'uid_notif'   => $user['id'],
+    'uid_apps'        => $user['id'],
+    'status_approved' => 'approved',
+    'uid_pending'     => $user['id'],
+    'status_pending'  => 'pending',
+    'uid_tracked'     => $user['id'],
+    'uid_notif'       => $user['id'],
 ]);
 $counts = $countsStatement->fetch() ?: [];
 
-$totalLists = (int) pdo()->query('SELECT COUNT(*) FROM lists')->fetchColumn();
+$totalLists = (int) $pdo->query('SELECT COUNT(*) FROM lists')->fetchColumn();
 $notifications = fetch_user_notifications($user['id']);
 
 $username = trim(($user['name'] ?? '') . ' ' . ($user['surname'] ?? ''));
@@ -55,22 +58,27 @@ if ($username === '') {
                 <div class="dashboard-grid">
                     <div class="stat-card">
                         <h3><?php echo (int) ($counts['linked_applications'] ?? 0); ?></h3>
-                        <p>Οι Αιτήσεις Μου</p>
+                        <p>Approved Links</p>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3><?php echo (int) ($counts['pending_verifications'] ?? 0); ?></h3>
+                        <p>Pending Verifications</p>
                     </div>
 
                     <div class="stat-card">
                         <h3><?php echo (int) ($counts['tracked_people'] ?? 0); ?></h3>
-                        <p>Παρακολουθούμενοι</p>
+                        <p>Tracked Candidates</p>
                     </div>
 
                     <div class="stat-card">
                         <h3><?php echo (int) ($counts['unread_notifications'] ?? 0); ?></h3>
-                        <p>Νέες Ειδοποιήσεις</p>
+                        <p>Unread Notifications</p>
                     </div>
 
                     <div class="stat-card">
                         <h3><?php echo $totalLists; ?></h3>
-                        <p>Διαθέσιμοι Πίνακες</p>
+                        <p>Available Lists</p>
                     </div>
                 </div>
 
@@ -102,7 +110,7 @@ if ($username === '') {
                         </span>
                         <div class="admin-tile-content">
                             <span class="admin-tile-title">Track My Applications</span>
-                            <span class="admin-tile-text">Σύνδεση προφίλ με υποψήφιο στους πίνακες και παρακολούθηση θέσης.</span>
+                            <span class="admin-tile-text">Σύνδεση προφίλ με υποψήφιο στους πίνακες και παρακολούθηση θέσης μετά από verification.</span>
                         </div>
                     </a>
 

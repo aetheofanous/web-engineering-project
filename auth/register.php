@@ -4,6 +4,7 @@
 require_once __DIR__ . '/../includes/bootstrap.php';
 
 require_guest();
+ensure_application_verification_schema(pdo());
 
 $errors = [];
 
@@ -84,20 +85,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($linkCandidateId > 0 && $role === 'candidate') {
                 try {
                     $linkStatement = pdo()->prepare(
-                        'INSERT INTO applications (user_id, candidate_id)
-                         VALUES (:user_id, :candidate_id)'
+                        'INSERT INTO applications (user_id, candidate_id, verification_status)
+                         VALUES (:user_id, :candidate_id, :verification_status)'
                     );
                     $linkStatement->execute([
                         'user_id'      => $newUserId,
                         'candidate_id' => $linkCandidateId,
+                        'verification_status' => 'pending',
                     ]);
 
                     foreach (fetch_candidate_options() as $option) {
                         if ((int) $option['id'] === $linkCandidateId) {
-                            create_notification($newUserId, notification_message_for_link($option));
+                            create_notification(
+                                $newUserId,
+                                'Your candidate-link request was submitted and is waiting for admin verification.'
+                            );
                             break;
                         }
                     }
+
+                    notify_all_admins(sprintf(
+                        'New verification request from %s (%s) for candidate ID %d.',
+                        trim($name . ' ' . $surname),
+                        $email,
+                        $linkCandidateId
+                    ));
                 } catch (PDOException $linkException) {
                     // Non-fatal — user is created, just log and continue.
                     error_log('Register link candidate failed: ' . $linkException->getMessage());
