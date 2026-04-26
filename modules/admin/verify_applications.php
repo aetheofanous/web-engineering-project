@@ -91,6 +91,19 @@ foreach ($requests as $request) {
     }
 }
 
+// Active tab — filters which requests show in the table.
+$activeTab = $_GET['tab'] ?? 'pending';
+if (!in_array($activeTab, ['pending', 'approved', 'rejected'], true)) {
+    $activeTab = 'pending';
+}
+
+$filteredRequests = array_values(array_filter(
+    $requests,
+    function ($request) use ($activeTab) {
+        return ($request['verification_status'] ?? 'pending') === $activeTab;
+    }
+));
+
 $messages = array_merge(
     get_flash_messages(),
     array_map(
@@ -153,9 +166,26 @@ $messages = array_merge(
                     <div class="section-header">
                         <h2 class="section-title">Verification Requests</h2>
                         <div class="chip-row">
-                            <span class="info-pill">Total: <?php echo h(count($requests)); ?></span>
-                            <span class="info-pill">Priority: pending first</span>
+                            <span class="info-pill">Showing: <?php echo h(count($filteredRequests)); ?> / <?php echo h(count($requests)); ?></span>
                         </div>
+                    </div>
+
+                    <div class="status-tabs" role="tablist">
+                        <a class="status-tab<?php echo $activeTab === 'pending' ? ' is-active' : ''; ?>"
+                           href="?tab=pending" role="tab" aria-selected="<?php echo $activeTab === 'pending' ? 'true' : 'false'; ?>">
+                            Pending
+                            <span class="status-tab__count"><?php echo (int) $summary['pending']; ?></span>
+                        </a>
+                        <a class="status-tab<?php echo $activeTab === 'approved' ? ' is-active' : ''; ?>"
+                           href="?tab=approved" role="tab" aria-selected="<?php echo $activeTab === 'approved' ? 'true' : 'false'; ?>">
+                            Approved
+                            <span class="status-tab__count"><?php echo (int) $summary['approved']; ?></span>
+                        </a>
+                        <a class="status-tab<?php echo $activeTab === 'rejected' ? ' is-active' : ''; ?>"
+                           href="?tab=rejected" role="tab" aria-selected="<?php echo $activeTab === 'rejected' ? 'true' : 'false'; ?>">
+                            Rejected
+                            <span class="status-tab__count"><?php echo (int) $summary['rejected']; ?></span>
+                        </a>
                     </div>
 
                     <div class="table-wrap">
@@ -174,12 +204,21 @@ $messages = array_merge(
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php if ($requests === []): ?>
+                                <?php if ($filteredRequests === []): ?>
                                     <tr>
-                                        <td colspan="9" class="empty-cell">There are no verification requests.</td>
+                                        <td colspan="9" class="empty-cell">
+                                            <?php
+                                            $emptyMessage = [
+                                                'pending'  => 'Δεν υπάρχουν pending requests αυτή τη στιγμή.',
+                                                'approved' => 'Δεν υπάρχουν approved links ακόμη.',
+                                                'rejected' => 'Δεν υπάρχουν rejected requests.',
+                                            ];
+                                            echo h($emptyMessage[$activeTab] ?? 'There are no verification requests.');
+                                            ?>
+                                        </td>
                                     </tr>
                                 <?php else: ?>
-                                    <?php foreach ($requests as $request): ?>
+                                    <?php foreach ($filteredRequests as $request): ?>
                                         <tr>
                                             <td><?php echo h($request['id']); ?></td>
                                             <td>

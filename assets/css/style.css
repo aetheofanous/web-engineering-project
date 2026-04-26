@@ -448,18 +448,6 @@ textarea {
 .page-banner p:first-of-type {
     margin-top: 4px;
 }
-/* dashboard links */
-.dashboard-links {
-    margin-top: 16px;
-    display: flex;
-    gap: 12px;
-}
-.dashboard-links a {
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-}
-
 .danger-link {
     border: 1px solid #e3b4b4;
     color: #c94b4b;
@@ -2117,6 +2105,57 @@ body {
     color: var(--muted);
     font-size: 0.84rem;
     font-weight: 600;
+}
+
+.status-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0 18px;
+}
+
+.status-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: #ffffff;
+    color: var(--text);
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.status-tab:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.status-tab.is-active {
+    background: var(--primary, #1f3a8a);
+    border-color: var(--primary, #1f3a8a);
+    color: #ffffff;
+}
+
+.status-tab__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.06);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: inherit;
+}
+
+.status-tab.is-active .status-tab__count {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
 }
 
 .section-header {

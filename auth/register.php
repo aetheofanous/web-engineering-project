@@ -131,8 +131,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 error_log('notify_all_admins failed: ' . $adminNotifyException->getMessage());
             }
 
-            add_flash('success', 'Ο λογαριασμός δημιουργήθηκε επιτυχώς. Μπορείτε να συνδεθείτε.');
-            redirect_to('auth/login.php?registered=1');
+            if ($linkCandidateId > 0 && $role === 'candidate') {
+                add_flash(
+                    'success',
+                    'Η εγγραφή ολοκληρώθηκε επιτυχώς. Το αίτημα σύνδεσης με υποψήφιο εστάλη στον διαχειριστή για έλεγχο και θα ενεργοποιηθεί μετά την έγκρισή του.'
+                );
+            } else {
+                add_flash('success', 'Η εγγραφή ολοκληρώθηκε επιτυχώς. Μπορείτε τώρα να συνδεθείτε.');
+            }
+            redirect_to('auth/login.php');
         } catch (PDOException $exception) {
             error_log('Register insert failed: ' . $exception->getMessage());
             $errors[] = 'Η εγγραφή δεν ολοκληρώθηκε. Δοκιμάστε ξανά αργότερα.';
@@ -245,30 +252,36 @@ $messages = array_map(
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="role">User Role</label>
-                                <input type="text" id="role" class="form-input" value="Candidate" disabled>
+                                <label for="role">Ρόλος Χρήστη</label>
+                                <input type="text" id="role" class="form-input" value="Υποψήφιος" disabled>
                                 <input type="hidden" name="role" value="candidate">
-                                <span class="form-hint">Public registration creates candidate accounts only.</span>
+                                <span class="form-hint">Η δημόσια εγγραφή δημιουργεί λογαριασμούς υποψηφίων.</span>
                             </div>
                         </div>
                     </div>
 
                     <div class="section-card section-card-compact">
                         <h2 class="section-title">Προαιρετική Σύνδεση με Υποψήφιο</h2>
-                        <p class="section-text">Αν είστε ήδη καταχωρημένος/η σε επίσημο πίνακα διοριστέων, μπορείτε να συσχετίσετε τον νέο σας λογαριασμό απευθείας με τον υποψήφιο. Αυτό δημιουργεί αυτόματα μια εγγραφή στο «Track My Applications».</p>
+                        <p class="section-text">
+                            Αν είστε ήδη καταχωρημένος/η σε επίσημο πίνακα διοριστέων, μπορείτε να ζητήσετε τη
+                            σύνδεση του λογαριασμού σας με τον αντίστοιχο υποψήφιο. <strong>Το αίτημα δεν εγκρίνεται
+                            αυτόματα</strong> — προωθείται στον διαχειριστή για έλεγχο και εμφανίζεται στο «Track My
+                            Applications» με κατάσταση <em>Pending</em> μέχρι την έγκριση. Μόλις γίνει approve θα
+                            λάβετε σχετική ειδοποίηση.
+                        </p>
 
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="link_candidate_id">Αντιστοιχία σε Υποψήφιο</label>
                                 <select name="link_candidate_id" id="link_candidate_id" class="form-input">
-                                    <option value="0">— Παράλειψη (μπορώ να το κάνω μετά τη σύνδεση) —</option>
+                                    <option value="0">— Παράλειψη (μπορώ να υποβάλω αίτημα αργότερα) —</option>
                                     <?php foreach (fetch_candidate_options() as $option): ?>
                                         <option value="<?php echo (int) $option['id']; ?>" <?php echo ((int) ($_POST['link_candidate_id'] ?? 0) === (int) $option['id']) ? 'selected' : ''; ?>>
                                             <?php echo e(candidate_label($option)); ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <span class="form-hint">Η συσχέτιση εφαρμόζεται μόνο αν επιλέξετε ρόλο «Υποψήφιος».</span>
+                                <span class="form-hint">Η αίτηση σύνδεσης υπόκειται σε έλεγχο από τον διαχειριστή.</span>
                             </div>
                         </div>
                     </div>

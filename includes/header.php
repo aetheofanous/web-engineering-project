@@ -38,7 +38,6 @@ $flashes = get_flashes();
             <div class="site-topbar__actions">
                 <?php if ($user !== null): ?>
                     <span class="user-chip"><?php echo e($user['name'] . ' ' . $user['surname']); ?> | <?php echo e(strtoupper($user['role'])); ?></span>
-                    <a class="button button--ghost" href="<?php echo e(base_url(role_dashboard_path($user['role']))); ?>">My Module</a>
                     <a class="button button--ghost" href="<?php echo e(base_url('auth/logout.php')); ?>">Logout</a>
                 <?php else: ?>
                     <a class="button button--ghost" href="<?php echo e(base_url('auth/login.php')); ?>">Login</a>

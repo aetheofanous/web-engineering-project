@@ -132,10 +132,19 @@ if ($displayName === '') {
                             <span class="admin-tile-text">Συγκεντρωτικά στατιστικά και γραφική απεικόνιση των δεδομένων.</span>
                         </div>
                     </a>
-                </div>
 
-                <div class="dashboard-links">
-                    <a href="profile.php" class="button-link secondary">My Profile</a>
+                    <a class="admin-tile" href="profile.php">
+                        <span class="admin-tile-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="48" height="48" role="img" focusable="false">
+                                <path d="M20 21c0-3.31-3.58-6-8-6s-8 2.69-8 6"></path>
+                                <circle cx="12" cy="8" r="5"></circle>
+                            </svg>
+                        </span>
+                        <div class="admin-tile-content">
+                            <span class="admin-tile-title">My Profile</span>
+                            <span class="admin-tile-text">Επεξεργασία προσωπικών στοιχείων και κωδικού πρόσβασης.</span>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>

@@ -47,6 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Pick up any flash messages queued by logout / register so we can display them.
+// Important: get_flash_messages() reads AND clears the session, so each message
+// is shown exactly once. We no longer rely on URL params (?registered=1) which
+// would keep re-showing the same message on every refresh of the URL.
 $flashMessages = get_flash_messages();
 
 $messages = array_merge(
@@ -58,13 +61,6 @@ $messages = array_merge(
         $errors
     )
 );
-
-if (isset($_GET['registered']) && $_GET['registered'] === '1') {
-    $messages[] = [
-        'type' => 'success',
-        'message' => 'Η εγγραφή ολοκληρώθηκε επιτυχώς. Μπορείτε τώρα να συνδεθείτε.',
-    ];
-}
 ?>
 <!DOCTYPE html>
 <html lang="el">
