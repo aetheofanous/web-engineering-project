@@ -136,8 +136,6 @@ if ($displayName === '') {
 
                 <div class="dashboard-links">
                     <a href="profile.php" class="button-link secondary">My Profile</a>
-                    <a href="../list.php" class="button-link secondary">Προβολή Καταλόγων</a>
-                    <a href="../../auth/logout.php" class="button-link danger-link">Αποσύνδεση</a>
                 </div>
             </div>
         </div>

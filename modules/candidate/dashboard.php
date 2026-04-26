@@ -24,9 +24,6 @@ $countsStatement->execute([
 ]);
 $counts = $countsStatement->fetch() ?: [];
 
-$totalLists = (int) $pdo->query('SELECT COUNT(*) FROM lists')->fetchColumn();
-$notifications = fetch_user_notifications($user['id']);
-
 $username = trim(($user['name'] ?? '') . ' ' . ($user['surname'] ?? ''));
 if ($username === '') {
     $username = $_SESSION['username'] ?? 'Χρήστη';
@@ -74,11 +71,6 @@ if ($username === '') {
                     <div class="stat-card">
                         <h3><?php echo (int) ($counts['unread_notifications'] ?? 0); ?></h3>
                         <p>Unread Notifications</p>
-                    </div>
-
-                    <div class="stat-card">
-                        <h3><?php echo $totalLists; ?></h3>
-                        <p>Available Lists</p>
                     </div>
                 </div>
 
@@ -128,32 +120,6 @@ if ($username === '') {
                     </a>
                 </div>
 
-                <div class="section-divider"></div>
-                <h2 class="section-title">Τελευταίες Ειδοποιήσεις</h2>
-
-                <div class="notifications-list">
-                    <?php if ($notifications === []): ?>
-                        <div class="empty-notifications">Δεν υπάρχουν ειδοποιήσεις ακόμη για τον λογαριασμό σας.</div>
-                    <?php else: ?>
-                        <?php foreach ($notifications as $notification): ?>
-                            <?php $isUnread = (int) $notification['is_read'] === 0; ?>
-                            <article class="notification-item<?php echo $isUnread ? ' is-unread' : ''; ?>">
-                                <span class="notification-badge<?php echo $isUnread ? ' is-unread' : ''; ?>">
-                                    <?php echo $isUnread ? 'Νέο' : 'Αναγνωσμένο'; ?>
-                                </span>
-                                <div class="notification-content">
-                                    <span class="notification-date"><?php echo h(date('d/m/Y H:i', strtotime($notification['created_at']))); ?></span>
-                                    <span class="notification-message"><?php echo h($notification['message']); ?></span>
-                                </div>
-                            </article>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
-
-                <div class="dashboard-links">
-                    <a href="../search/search.php" class="button-link secondary">Δημόσια Αναζήτηση</a>
-                    <a href="../../auth/logout.php" class="button-link danger-link">Αποσύνδεση</a>
-                </div>
             </div>
         </div>
     </div>
