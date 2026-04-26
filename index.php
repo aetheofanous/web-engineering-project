@@ -1,12 +1,7 @@
 <?php
-// Landing page — presents the 4 modules of the application exactly as the
-// requirements document specifies (Admin, Candidate, Search, API).
-
 require_once __DIR__ . '/includes/bootstrap.php';
 
 $user = current_user();
-
-// Hide admin/candidate tiles unless the visitor has access (role-based).
 $role = $user['role'] ?? null;
 ?>
 <!DOCTYPE html>
@@ -25,34 +20,73 @@ $role = $user['role'] ?? null;
                 <p class="eyebrow">Ηλεκτρονική Υπηρεσία</p>
                 <h1 class="auth-title">Σύστημα Παρακολούθησης Πινάκων Διοριστέων</h1>
                 <p class="auth-subtitle">
-                    Διαδικτυακή εφαρμογή παρακολούθησης των καταλόγων διοριστέων της Επιτροπής Εκπαιδευτικής Υπηρεσίας (ΕΕΥ).
-                    Επιλέξτε ένα από τα τέσσερα διαθέσιμα modules για να συνεχίσετε.
+                    Διαδικτυακή εφαρμογή για αναζήτηση, παρακολούθηση και διαχείριση πινάκων διοριστέων.
+                    Η πρώτη σελίδα οργανώνει καθαρά όλα τα διαθέσιμα modules ώστε ο χρήστης να βρίσκει γρήγορα το σωστό σημείο εισόδου.
                 </p>
                 <div class="landing-hero-links">
                     <?php if ($user === null): ?>
-                        <a class="button-link" href="auth/login.php">Είσοδος</a>
+                        <a class="button-link" href="modules/search/dashboard.php">Αναζήτηση Χωρίς Login</a>
                         <a class="button-link secondary" href="auth/register.php">Εγγραφή</a>
+                        <a class="button-link secondary" href="auth/login.php">Είσοδος</a>
                     <?php else: ?>
                         <span class="status-badge <?php echo h($role); ?>">
-                            Συνδεδεμένος/η ως <?php echo h(trim(($user['name'] ?? '') . ' ' . ($user['surname'] ?? ''))); ?>
-                            (<?php echo h($role); ?>)
+                            Συνδεδεμένος/η ως <?php echo h(trim(($user['name'] ?? '') . ' ' . ($user['surname'] ?? ''))); ?> (<?php echo h($role); ?>)
                         </span>
-                        <a class="button-link secondary" href="auth/logout.php">Αποσύνδεση</a>
+                        <a class="button-link secondary" href="<?php echo h($role === 'admin' ? 'modules/admin/dashboard.php' : 'modules/candidate/dashboard.php'); ?>">Το Module Μου</a>
                     <?php endif; ?>
                 </div>
             </div>
 
             <div class="page-body">
+                <div class="hero-grid">
+                    <section class="hero-panel">
+                        <span class="hero-kicker">Start Here</span>
+                        <h2 class="section-title">Τι μπορείς να κάνεις από εδώ</h2>
+                        <p class="section-text">Η αρχική σελίδα λειτουργεί σαν κεντρικός πίνακας πλοήγησης. Αντί ο χρήστης να ψάχνει σε πολλά σημεία, βλέπει άμεσα τις βασικές επιλογές και ξεκινά από τη σωστή ροή.</p>
+                        <div class="hero-actions">
+                            <a class="button-link" href="modules/search/dashboard.php">Open Search</a>
+                            <?php if ($user === null): ?>
+                                <a class="button-link secondary" href="auth/register.php">Create Account</a>
+                            <?php else: ?>
+                                <a class="button-link secondary" href="<?php echo h($role === 'admin' ? 'modules/admin/dashboard.php' : 'modules/candidate/dashboard.php'); ?>">Open My Module</a>
+                            <?php endif; ?>
+                        </div>
+                        <div class="hero-metrics">
+                            <div class="hero-metric">
+                                <strong>4</strong>
+                                <span>Main modules</span>
+                            </div>
+                            <div class="hero-metric">
+                                <strong>2</strong>
+                                <span>User roles</span>
+                            </div>
+                            <div class="hero-metric">
+                                <strong>1</strong>
+                                <span>Shared database</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <aside class="hero-panel hero-panel--soft">
+                        <h2 class="section-title">Γρήγορος Οδηγός</h2>
+                        <ul class="check-list">
+                            <li>Για απλή αναζήτηση, πήγαινε στο Search module χωρίς login.</li>
+                            <li>Για tracking και προσωπικές ειδοποιήσεις, δημιούργησε candidate λογαριασμό.</li>
+                            <li>Για διαχείριση χρηστών, lists και approvals, χρησιμοποίησε το Admin module.</li>
+                        </ul>
+                    </aside>
+                </div>
+
+                <div class="section-divider"></div>
                 <h2 class="section-title">Επιλογή Module</h2>
-                <p class="section-text">Κάθε module καλύπτει διαφορετικό σκοπό. Τα admin / candidate modules απαιτούν σύνδεση με τον αντίστοιχο ρόλο.</p>
+                <p class="section-text">Κάθε module καλύπτει διαφορετική ανάγκη. Έτσι το UI είναι πιο απλό, πιο στοχευμένο και δεν φορτώνει τον χρήστη με άσχετες επιλογές.</p>
 
                 <div class="admin-nav-grid">
-                    <!-- Admin module -->
                     <?php
                     $adminAllowed = ($role === 'admin');
                     $adminHref = $adminAllowed ? 'modules/admin/dashboard.php' : 'auth/login.php';
                     ?>
-                    <a class="admin-tile <?php echo $adminAllowed ? '' : ''; ?>" href="<?php echo h($adminHref); ?>">
+                    <a class="admin-tile" href="<?php echo h($adminHref); ?>">
                         <span class="admin-tile-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" width="48" height="48" role="img" focusable="false">
                                 <path d="M12 2 4 5v6c0 5 3.5 9.5 8 11 4.5-1.5 8-6 8-11V5l-8-3Z"></path>
@@ -61,16 +95,13 @@ $role = $user['role'] ?? null;
                         </span>
                         <div class="admin-tile-content">
                             <span class="admin-tile-title">Admin Module</span>
-                            <span class="admin-tile-text">Διαχείριση χρηστών, φόρτωση επίσημων πινάκων και αναλυτικά στατιστικά (Manage Users / Manage Lists / Reports).</span>
-                            <?php if (!$adminAllowed): ?>
-                                <span class="admin-tile-badge restricted">Χρειάζεται admin login</span>
-                            <?php else: ?>
-                                <span class="admin-tile-badge">Διαθέσιμο</span>
-                            <?php endif; ?>
+                            <span class="admin-tile-text">Διαχείριση χρηστών, πινάκων, reports και verification requests.</span>
+                            <span class="admin-tile-badge <?php echo $adminAllowed ? '' : 'restricted'; ?>">
+                                <?php echo $adminAllowed ? 'Διαθέσιμο' : 'Απαιτεί admin login'; ?>
+                            </span>
                         </div>
                     </a>
 
-                    <!-- Candidate module -->
                     <?php
                     $candidateAllowed = ($role === 'candidate');
                     $candidateHref = $candidateAllowed ? 'modules/candidate/dashboard.php' : 'auth/login.php';
@@ -84,16 +115,13 @@ $role = $user['role'] ?? null;
                         </span>
                         <div class="admin-tile-content">
                             <span class="admin-tile-title">Candidate Module</span>
-                            <span class="admin-tile-text">Προσωπικός χώρος υποψηφίου: προφίλ, σύνδεση με επίσημο πίνακα και παρακολούθηση άλλων υποψηφίων.</span>
-                            <?php if (!$candidateAllowed): ?>
-                                <span class="admin-tile-badge restricted">Χρειάζεται login</span>
-                            <?php else: ?>
-                                <span class="admin-tile-badge">Διαθέσιμο</span>
-                            <?php endif; ?>
+                            <span class="admin-tile-text">Προφίλ, verified linking με candidate, tracking και notifications.</span>
+                            <span class="admin-tile-badge <?php echo $candidateAllowed ? '' : 'restricted'; ?>">
+                                <?php echo $candidateAllowed ? 'Διαθέσιμο' : 'Απαιτεί login'; ?>
+                            </span>
                         </div>
                     </a>
 
-                    <!-- Search module -->
                     <a class="admin-tile" href="modules/search/dashboard.php">
                         <span class="admin-tile-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" width="48" height="48" role="img" focusable="false">
@@ -103,12 +131,11 @@ $role = $user['role'] ?? null;
                         </span>
                         <div class="admin-tile-content">
                             <span class="admin-tile-title">Search Module</span>
-                            <span class="admin-tile-text">Δημόσια αναζήτηση υποψηφίων ανά όνομα, επίθετο, ειδικότητα και έτος — με φίλτρα και στατιστικά.</span>
+                            <span class="admin-tile-text">Δημόσια αναζήτηση υποψηφίων, φίλτρα και στατιστικά χωρίς υποχρεωτική σύνδεση.</span>
                             <span class="admin-tile-badge">Δημόσιο</span>
                         </div>
                     </a>
 
-                    <!-- API module -->
                     <a class="admin-tile" href="api/api.php">
                         <span class="admin-tile-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" width="48" height="48" role="img" focusable="false">
@@ -119,19 +146,38 @@ $role = $user['role'] ?? null;
                         </span>
                         <div class="admin-tile-content">
                             <span class="admin-tile-title">API Module</span>
-                            <span class="admin-tile-text">JSON endpoints (GET / POST / PUT / DELETE) για ενσωμάτωση με τρίτα συστήματα — Postman friendly.</span>
-                            <span class="admin-tile-badge">Δημόσιο</span>
+                            <span class="admin-tile-text">JSON endpoints για δοκιμές, integrations και Postman demo.</span>
+                            <span class="admin-tile-badge">Developer</span>
                         </div>
                     </a>
                 </div>
 
                 <div class="section-divider"></div>
+                <h2 class="section-title">Πώς Το Χρησιμοποιείς</h2>
+                <div class="step-grid">
+                    <article class="step-card">
+                        <span class="step-card__number">1</span>
+                        <h3>Search first</h3>
+                        <p>Ξεκίνα από τη δημόσια αναζήτηση για να δεις πινάκες, υποψηφίους και διαθέσιμα δεδομένα.</p>
+                    </article>
+                    <article class="step-card">
+                        <span class="step-card__number">2</span>
+                        <h3>Create account</h3>
+                        <p>Αν χρειάζεσαι personal dashboard, κάνε εγγραφή για να αποκτήσεις tracking και notifications.</p>
+                    </article>
+                    <article class="step-card">
+                        <span class="step-card__number">3</span>
+                        <h3>Use the right workspace</h3>
+                        <p>Ο κάθε ρόλος βλέπει μόνο τα σωστά εργαλεία, ώστε το σύστημα να παραμένει πιο απλό και πρακτικό.</p>
+                    </article>
+                </div>
+
+                <div class="section-divider"></div>
                 <h2 class="section-title">Σχετικά με την Εφαρμογή</h2>
                 <p class="section-text">
-                    Η παρούσα εφαρμογή δημιουργήθηκε για εκπαιδευτικούς σκοπούς στο πλαίσιο εργασίας του μαθήματος
-                    Μηχανικής Ιστού (Τεχνολογικό Πανεπιστήμιο Κύπρου) και εμπνέεται από την επίσημη σελίδα
-                    <a href="https://www.gov.cy/eey/" target="_blank" rel="noopener">gov.cy/eey</a>.
-                    Όλα τα modules μοιράζονται την ίδια βάση δεδομένων αλλά κάθε χρήστης βλέπει μόνο ό,τι του επιτρέπει ο ρόλος του.
+                    Η παρούσα εφαρμογή δημιουργήθηκε για εκπαιδευτικούς σκοπούς και οργανώνει σε ένα κοινό περιβάλλον
+                    το public search, το candidate tracking, το admin management και το API layer.
+                    Όλα τα modules μοιράζονται την ίδια βάση δεδομένων, αλλά κάθε χρήστης βλέπει μόνο ό,τι του επιτρέπει ο ρόλος του.
                 </p>
             </div>
         </div>

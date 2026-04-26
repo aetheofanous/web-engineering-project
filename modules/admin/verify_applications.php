@@ -78,6 +78,19 @@ $requestsStatement = $pdo->query(
 );
 $requests = $requestsStatement->fetchAll();
 
+$summary = [
+    'pending' => 0,
+    'approved' => 0,
+    'rejected' => 0,
+];
+
+foreach ($requests as $request) {
+    $status = $request['verification_status'] ?? 'pending';
+    if (isset($summary[$status])) {
+        $summary[$status]++;
+    }
+}
+
 $messages = array_merge(
     get_flash_messages(),
     array_map(
@@ -108,7 +121,7 @@ $messages = array_merge(
                     <a class="button-link secondary header-back-link" href="dashboard.php">← Επιστροφή στο Dashboard</a>
                 </div>
                 <h1 class="auth-title">Verify Candidate Links</h1>
-                <p class="auth-subtitle">Εδώ ο admin ελέγχει και εγκρίνει ή απορρίπτει τα αιτήματα σύνδεσης χρήστη με υποψήφιο.</p>
+                <p class="auth-subtitle">Το screen αυτό είναι πλέον πιο πρακτικό: πρώτα δείχνει καθαρή εικόνα των requests και μετά τις ενέργειες approval/rejection.</p>
             </div>
 
             <div class="page-body">
@@ -116,10 +129,33 @@ $messages = array_merge(
                     <div class="message <?php echo h($message['type']); ?>"><?php echo h($message['message']); ?></div>
                 <?php endforeach; ?>
 
+                <div class="verification-summary">
+                    <div class="summary-card">
+                        <strong><?php echo (int) $summary['pending']; ?></strong>
+                        <span>Pending Requests</span>
+                    </div>
+                    <div class="summary-card">
+                        <strong><?php echo (int) $summary['approved']; ?></strong>
+                        <span>Approved Links</span>
+                    </div>
+                    <div class="summary-card">
+                        <strong><?php echo (int) $summary['rejected']; ?></strong>
+                        <span>Rejected Requests</span>
+                    </div>
+                </div>
+
+                <div class="compact-note">
+                    Κάθε request δείχνει ποιος χρήστης ζήτησε τη σύνδεση, με ποιον candidate, ποια είναι η τρέχουσα κατάσταση
+                    και ποιο note άφησε ο admin. Έτσι ο έλεγχος γίνεται πιο γρήγορα και χωρίς περιττά clicks.
+                </div>
+
                 <div class="section-card section-card-compact">
                     <div class="section-header">
                         <h2 class="section-title">Verification Requests</h2>
-                        <p class="section-text">Σύνολο: <strong><?php echo h(count($requests)); ?></strong></p>
+                        <div class="chip-row">
+                            <span class="info-pill">Total: <?php echo h(count($requests)); ?></span>
+                            <span class="info-pill">Priority: pending first</span>
+                        </div>
                     </div>
 
                     <div class="table-wrap">
@@ -155,7 +191,11 @@ $messages = array_merge(
                                                 <small>#<?php echo h($request['position']); ?> | <?php echo h($request['points']); ?> points</small>
                                             </td>
                                             <td><?php echo h($request['specialty_name'] . ' ' . $request['year']); ?></td>
-                                            <td><span class="status-badge <?php echo h(application_status_class($request['verification_status'])); ?>"><?php echo h(application_status_label($request['verification_status'])); ?></span></td>
+                                            <td>
+                                                <span class="status-badge <?php echo h(application_status_class($request['verification_status'])); ?>">
+                                                    <?php echo h(application_status_label($request['verification_status'])); ?>
+                                                </span>
+                                            </td>
                                             <td><?php echo h(date('d/m/Y H:i', strtotime($request['linked_at']))); ?></td>
                                             <td>
                                                 <?php if (!empty($request['verified_at'])): ?>
@@ -168,9 +208,9 @@ $messages = array_merge(
                                             <td><?php echo h($request['verification_notes'] ?? '-'); ?></td>
                                             <td>
                                                 <?php if (($request['verification_status'] ?? 'pending') === 'pending'): ?>
-                                                    <form method="post" action="">
+                                                    <form method="post" action="" class="action-form-stack">
                                                         <input type="hidden" name="application_id" value="<?php echo (int) $request['id']; ?>">
-                                                        <textarea name="verification_notes" rows="3" placeholder="Optional note"></textarea>
+                                                        <textarea name="verification_notes" rows="3" placeholder="Optional note for the user"></textarea>
                                                         <div class="table-actions">
                                                             <button type="submit" name="action" value="approve" class="button-link table-button secondary">Approve</button>
                                                             <button type="submit" name="action" value="reject" class="table-button danger">Reject</button>
