@@ -731,6 +731,17 @@ body {
     white-space: nowrap;
 }
 
+.banner-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    order: 1;
+}
+
+.banner-actions .header-back-link {
+    margin: 0 !important;
+}
+
 .primary-button:hover {
     background: var(--primary-dark);
     transform: translateY(-1px);

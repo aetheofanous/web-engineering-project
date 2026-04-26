@@ -124,9 +124,6 @@ if (isset($_GET['registered']) && $_GET['registered'] === '1') {
                     </form>
                 </div>
 
-                <div class="auth-footer">
-                    Δεν διαθέτετε λογαριασμό; <a href="register.php">Εγγραφή νέου χρήστη</a>
-                </div>
             </div>
         </div>
     </div>

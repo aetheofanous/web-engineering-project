@@ -36,8 +36,6 @@ $flashes = get_flashes();
             </a>
 
             <div class="site-topbar__actions">
-                <a class="top-link" href="<?php echo e(base_url('modules/search/dashboard.php')); ?>">Search</a>
-                <a class="top-link" href="<?php echo e(base_url('api/api.php')); ?>">API</a>
                 <?php if ($user !== null): ?>
                     <span class="user-chip"><?php echo e($user['name'] . ' ' . $user['surname']); ?> | <?php echo e(strtoupper($user['role'])); ?></span>
                     <a class="button button--ghost" href="<?php echo e(base_url(role_dashboard_path($user['role']))); ?>">My Module</a>

@@ -30,9 +30,7 @@ $appConfig = [
             ['key' => 'track-others', 'label' => 'Track Others', 'path' => 'modules/candidate/track-others.php'],
         ],
         'search' => [
-            ['key' => 'dashboard', 'label' => 'Dashboard', 'path' => 'modules/search/dashboard.php'],
             ['key' => 'search', 'label' => 'Search', 'path' => 'modules/search/search.php'],
-            ['key' => 'register', 'label' => 'Register', 'path' => 'auth/register.php'],
             ['key' => 'statistics', 'label' => 'Statistics', 'path' => 'modules/search/statistics.php'],
         ],
         'api' => [

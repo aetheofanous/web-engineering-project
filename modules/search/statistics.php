@@ -189,9 +189,14 @@ $totalYears = count($byYear);
             <div class="page-banner">
                 <div class="banner-row-flex">
                     <p class="eyebrow">Search Module</p>
-                    <a class="button-link secondary header-back-link" href="dashboard.php">
-                        ← Επιστροφή στο Search Dashboard
-                    </a>
+                    <div class="banner-actions">
+                        <a class="button-link secondary header-back-link" href="<?php echo h(base_url('index.php')); ?>">
+                            ← Αρχική
+                        </a>
+                        <a class="button-link secondary header-back-link" href="search.php">
+                            Αναζήτηση →
+                        </a>
+                    </div>
                 </div>
                 <h1 class="auth-title">Στατιστικά Πινάκων Διοριστέων</h1>
                 <p class="auth-subtitle">Δημόσια στατιστικά ανά ειδικότητα, έτος και χρονική περίοδο — με διαδραστικά γραφήματα και αναλυτικούς πίνακες σε πραγματικό χρόνο από τη βάση.</p>

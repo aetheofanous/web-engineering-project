@@ -76,7 +76,7 @@ $role = $user['role'] ?? null;
                         </div>
                     </a>
 
-                    <a class="admin-tile" href="modules/search/dashboard.php">
+                    <a class="admin-tile" href="modules/search/search.php">
                         <span class="admin-tile-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" width="48" height="48" role="img" focusable="false">
                                 <circle cx="11" cy="11" r="7"></circle>
@@ -100,7 +100,7 @@ $role = $user['role'] ?? null;
                         </span>
                         <div class="admin-tile-content">
                             <span class="admin-tile-title">API Module</span>
-                            <span class="admin-tile-text">JSON endpoints για δοκιμές, integrations και Postman demo.</span>
+                            <span class="admin-tile-text">JSON endpoints για άντληση δεδομένων από τρίτες εφαρμογές (PDF requirement).</span>
                             <span class="admin-tile-badge">Developer</span>
                         </div>
                     </a>

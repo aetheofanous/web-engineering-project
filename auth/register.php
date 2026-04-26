@@ -168,8 +168,8 @@ $messages = array_map(
             <div class="page-banner">
                 <div class="banner-row-flex">
                     <p class="eyebrow">Νέος Λογαριασμός</p>
-                    <a class="button-link secondary header-back-link" href="login.php">
-                        ← Επιστροφή στη Σύνδεση
+                    <a class="button-link secondary header-back-link" href="../index.php">
+                        ← Επιστροφή στην Αρχική
                     </a>
                 </div>
                 <h1 class="auth-title">Εγγραφή Χρήστη</h1>
@@ -309,9 +309,6 @@ $messages = array_map(
                     </div>
                 </form>
 
-                <div class="auth-footer">
-                    Έχετε ήδη λογαριασμό; <a href="login.php">Μετάβαση στη σύνδεση</a>
-                </div>
             </div>
         </div>
     </div>

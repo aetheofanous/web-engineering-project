@@ -169,7 +169,7 @@ function role_dashboard_path(string $role): string
         case 'candidate':
             return 'modules/candidate/dashboard.php';
         default:
-            return 'modules/search/dashboard.php';
+            return 'modules/search/search.php';
     }
 }
 
