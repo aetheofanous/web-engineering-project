@@ -263,6 +263,11 @@ $messages = array_merge(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Users</title>
     <link rel="stylesheet" href="../../assets/css/style.css?v=<?php echo @filemtime(__DIR__ . '/../../assets/css/style.css') ?: time(); ?>">
+    <style>
+        .inline-action-form {
+            margin: 0;
+        }
+    </style>
 </head>
 <body>
     <?php require __DIR__ . '/../../includes/app_topbar.php'; ?>
@@ -445,7 +450,7 @@ $messages = array_merge(
                 Είσαι σίγουρος/η ότι θέλεις να διαγράψεις τον/την <strong id="deleteUserLabel"></strong>;
                 <br><strong>Η ενέργεια είναι μη αναστρέψιμη.</strong>
             </p>
-            <form method="post">
+            <form method="post" action="manage_users.php">
                 <input type="hidden" name="action" value="delete_user">
                 <input type="hidden" name="user_id" id="deleteUserId">
                 <div class="modal-actions">

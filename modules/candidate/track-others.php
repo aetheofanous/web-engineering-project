@@ -57,20 +57,93 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$candidateOptions = fetch_candidate_options();
+$keyword = trim($_GET['keyword'] ?? '');
+$specialtyFilter = (int) ($_GET['specialty_id'] ?? 0);
+$yearFilter = trim($_GET['year_filter'] ?? '');
+$order = $_GET['order'] ?? 'year_desc';
 
-$trackedStatement = pdo()->prepare(
-    'SELECT tracked_candidates.id, tracked_candidates.tracked_at,
+$orderSql = 'lists.year DESC, specialties.name ASC, candidates.position ASC';
+switch ($order) {
+    case 'year_asc':
+        $orderSql = 'lists.year ASC, specialties.name ASC, candidates.position ASC';
+        break;
+    case 'position_asc':
+        $orderSql = 'candidates.position ASC, lists.year DESC';
+        break;
+    case 'points_desc':
+        $orderSql = 'candidates.points DESC, candidates.position ASC';
+        break;
+    case 'name_asc':
+        $orderSql = 'candidates.surname ASC, candidates.name ASC';
+        break;
+}
+
+$specialties = fetch_specialties();
+
+$candidateSql = 'SELECT candidates.id, candidates.name, candidates.surname, candidates.position, candidates.points,
+                lists.year, specialties.name AS specialty_name
+         FROM candidates
+         INNER JOIN lists ON lists.id = candidates.list_id
+         INNER JOIN specialties ON specialties.id = candidates.specialty_id
+         WHERE 1 = 1';
+$candidateParams = [];
+
+if ($keyword !== '') {
+    $candidateSql .= ' AND (candidates.name LIKE :kw_name OR candidates.surname LIKE :kw_surname OR specialties.name LIKE :kw_specialty)';
+    $candidateParams['kw_name'] = '%' . $keyword . '%';
+    $candidateParams['kw_surname'] = '%' . $keyword . '%';
+    $candidateParams['kw_specialty'] = '%' . $keyword . '%';
+}
+
+if ($specialtyFilter > 0) {
+    $candidateSql .= ' AND specialties.id = :specialty_id';
+    $candidateParams['specialty_id'] = $specialtyFilter;
+}
+
+if ($yearFilter !== '' && ctype_digit($yearFilter)) {
+    $candidateSql .= ' AND lists.year = :year_filter';
+    $candidateParams['year_filter'] = (int) $yearFilter;
+}
+
+$candidateSql .= ' ORDER BY ' . $orderSql;
+$candidateStmt = pdo()->prepare($candidateSql);
+$candidateStmt->execute($candidateParams);
+$candidateOptions = $candidateStmt->fetchAll();
+
+$trackedSql = 'SELECT tracked_candidates.id, tracked_candidates.tracked_at,
             candidates.name, candidates.surname, candidates.position, candidates.points,
             lists.year, specialties.name AS specialty_name
      FROM tracked_candidates
      INNER JOIN candidates ON candidates.id = tracked_candidates.candidate_id
      INNER JOIN lists ON lists.id = candidates.list_id
      INNER JOIN specialties ON specialties.id = candidates.specialty_id
-     WHERE tracked_candidates.user_id = :user_id
-     ORDER BY tracked_candidates.tracked_at DESC'
+     WHERE tracked_candidates.user_id = :user_id';
+$trackedParams = ['user_id' => $user['id']];
+
+if ($keyword !== '') {
+    $trackedSql .= ' AND (candidates.name LIKE :tracked_kw_name OR candidates.surname LIKE :tracked_kw_surname OR specialties.name LIKE :tracked_kw_specialty)';
+    $trackedParams['tracked_kw_name'] = '%' . $keyword . '%';
+    $trackedParams['tracked_kw_surname'] = '%' . $keyword . '%';
+    $trackedParams['tracked_kw_specialty'] = '%' . $keyword . '%';
+}
+
+if ($specialtyFilter > 0) {
+    $trackedSql .= ' AND specialties.id = :tracked_specialty_id';
+    $trackedParams['tracked_specialty_id'] = $specialtyFilter;
+}
+
+if ($yearFilter !== '' && ctype_digit($yearFilter)) {
+    $trackedSql .= ' AND lists.year = :tracked_year_filter';
+    $trackedParams['tracked_year_filter'] = (int) $yearFilter;
+}
+
+$trackedSql .= ' ORDER BY ' . str_replace(
+    ['lists.', 'specialties.', 'candidates.'],
+    ['lists.', 'specialties.', 'candidates.'],
+    $orderSql
 );
-$trackedStatement->execute(['user_id' => $user['id']]);
+$trackedStatement = pdo()->prepare($trackedSql);
+$trackedStatement->execute($trackedParams);
 $trackedRows = $trackedStatement->fetchAll();
 
 $messages = array_merge(
@@ -116,6 +189,36 @@ $messages = array_merge(
                 <div class="section-card section-card-compact">
                     <h2 class="section-title">Προσθήκη Παρακολούθησης</h2>
                     <p class="section-text">Επιλέξτε από τη λίστα τον υποψήφιο που θέλετε να παρακολουθείτε στους πίνακες διοριστέων. Κάθε υποψήφιος μπορεί να προστεθεί μόνο μία φορά.</p>
+
+                    <div class="search-panel">
+                        <form method="get" action="" class="search-bar" role="search" aria-label="Search candidates">
+                            <label class="search-bar__field">
+                                <svg class="search-bar__field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="11" cy="11" r="7"></circle>
+                                    <path d="m20 20-3.5-3.5"></path>
+                                </svg>
+                                <input class="search-bar__field-input" type="search" name="keyword" value="<?php echo h($keyword); ?>" placeholder="Search candidate or specialty..." autocomplete="off">
+                            </label>
+                            <select class="search-bar__filter" name="specialty_id" aria-label="Specialty filter">
+                                <option value="0">All specialties</option>
+                                <?php foreach ($specialties as $specialty): ?>
+                                    <option value="<?php echo h($specialty['id']); ?>" <?php echo $specialtyFilter === (int) $specialty['id'] ? 'selected' : ''; ?>>
+                                        <?php echo h($specialty['name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <input class="search-bar__filter" type="number" name="year_filter" value="<?php echo h($yearFilter); ?>" placeholder="Year" min="2000" max="2100" aria-label="Year filter">
+                            <select class="search-bar__filter" name="order" aria-label="Order candidates">
+                                <option value="year_desc" <?php echo $order === 'year_desc' ? 'selected' : ''; ?>>Newest first</option>
+                                <option value="year_asc" <?php echo $order === 'year_asc' ? 'selected' : ''; ?>>Oldest first</option>
+                                <option value="position_asc" <?php echo $order === 'position_asc' ? 'selected' : ''; ?>>Best position</option>
+                                <option value="points_desc" <?php echo $order === 'points_desc' ? 'selected' : ''; ?>>Most points</option>
+                                <option value="name_asc" <?php echo $order === 'name_asc' ? 'selected' : ''; ?>>Name A-Z</option>
+                            </select>
+                            <button type="submit" class="search-bar__btn search-bar__btn--primary">Search</button>
+                            <a class="search-bar__btn search-bar__btn--ghost" href="track-others.php">Clear</a>
+                        </form>
+                    </div>
 
                     <form method="post" action="" class="add-specialty-form">
                         <input type="hidden" name="action" value="track">

@@ -75,10 +75,110 @@ function parse_candidate_rows($rawContent) {
     return $parsed;
 }
 
+function import_candidate_key(array $candidate): string
+{
+    $name = function_exists('mb_strtolower') ? mb_strtolower(trim($candidate['name'])) : strtolower(trim($candidate['name']));
+    $surname = function_exists('mb_strtolower') ? mb_strtolower(trim($candidate['surname'])) : strtolower(trim($candidate['surname']));
+
+    return $name . '|' . $surname . '|' . (string) ($candidate['birth_year'] ?? '');
+}
+
+function approved_application_positions_for_list(PDO $pdo, int $listId): array
+{
+    $stmt = $pdo->prepare(
+        'SELECT applications.id AS application_id, applications.user_id,
+                users.notify_position_changes,
+                candidates.position
+         FROM applications
+         INNER JOIN users ON users.id = applications.user_id
+         INNER JOIN candidates ON candidates.id = applications.candidate_id
+         WHERE applications.verification_status = :status
+           AND candidates.list_id = :list_id'
+    );
+    $stmt->execute([
+        'status' => 'approved',
+        'list_id' => $listId,
+    ]);
+
+    $rows = [];
+    foreach ($stmt->fetchAll() as $row) {
+        $rows[(int) $row['application_id']] = $row;
+    }
+    return $rows;
+}
+
+function notify_position_changes_for_list(PDO $pdo, array $beforeRows): int
+{
+    if ($beforeRows === []) {
+        return 0;
+    }
+
+    $applicationIds = array_keys($beforeRows);
+    $placeholders = implode(',', array_fill(0, count($applicationIds), '?'));
+    $stmt = $pdo->prepare(
+        'SELECT applications.id AS application_id, applications.user_id,
+                candidates.position, candidates.name, candidates.surname,
+                lists.year, specialties.name AS specialty_name
+         FROM applications
+         INNER JOIN candidates ON candidates.id = applications.candidate_id
+         INNER JOIN lists ON lists.id = candidates.list_id
+         INNER JOIN specialties ON specialties.id = candidates.specialty_id
+         WHERE applications.id IN (' . $placeholders . ')
+           AND applications.verification_status = ?'
+    );
+    $stmt->execute(array_merge($applicationIds, ['approved']));
+
+    $count = 0;
+    foreach ($stmt->fetchAll() as $after) {
+        $before = $beforeRows[(int) $after['application_id']] ?? null;
+        if (!$before || (int) $before['notify_position_changes'] !== 1) {
+            continue;
+        }
+
+        $oldPosition = (int) $before['position'];
+        $newPosition = (int) $after['position'];
+        if ($oldPosition === $newPosition) {
+            continue;
+        }
+
+        create_notification(
+            (int) $after['user_id'],
+            sprintf(
+                'Your approved application for %s %s in %s %s changed position from #%d to #%d.',
+                $after['name'],
+                $after['surname'],
+                $after['specialty_name'],
+                $after['year'],
+                $oldPosition,
+                $newPosition
+            )
+        );
+        $count++;
+    }
+
+    return $count;
+}
+
+function notify_new_list_subscribers(PDO $pdo, string $specialtyName, int $year): int
+{
+    $stmt = $pdo->query("SELECT id FROM users WHERE role = 'candidate' AND notify_new_lists = 1");
+
+    $count = 0;
+    foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $userId) {
+        create_notification(
+            (int) $userId,
+            sprintf('A new appointable list was published for %s %d.', $specialtyName, $year)
+        );
+        $count++;
+    }
+
+    return $count;
+}
+
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
+    $action = isset($_POST['delete_specialty_id']) ? 'delete_specialty' : ($_POST['action'] ?? '');
 
     if ($action === 'save_specialties') {
         $selected = array_map('intval', $_POST['active_specialties'] ?? []);
@@ -92,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         set_flash_message('success', 'Οι ενεργές ειδικότητες ενημερώθηκαν.');
-        redirect_to('manage_lists.php');
+        redirect_to('modules/admin/manage_lists.php');
     }
 
     if ($action === 'add_specialty') {
@@ -101,6 +201,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($name === '') {
             $errors[] = 'Το όνομα ειδικότητας είναι υποχρεωτικό.';
+        }
+
+        if (!$errors) {
+            $stmt = $pdo->prepare('SELECT id FROM specialties WHERE LOWER(TRIM(name)) = LOWER(TRIM(:name)) LIMIT 1');
+            $stmt->execute(['name' => $name]);
+
+            if ($stmt->fetch()) {
+                $errors[] = 'This specialty already exists.';
+            }
         }
 
         if (!$errors) {
@@ -114,7 +223,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
 
             set_flash_message('success', 'Η νέα ειδικότητα προστέθηκε.');
-            redirect_to('manage_lists.php');
+            redirect_to('modules/admin/manage_lists.php');
+        }
+    }
+
+    if ($action === 'delete_specialty') {
+        $specialtyId = (int) ($_POST['delete_specialty_id'] ?? 0);
+
+        if ($specialtyId <= 0) {
+            $errors[] = 'Specialty not found.';
+        }
+
+        if (!$errors) {
+            $listStmt = $pdo->prepare('SELECT id FROM lists WHERE specialty_id = :specialty_id');
+            $listStmt->execute(['specialty_id' => $specialtyId]);
+            $listIds = array_map('intval', $listStmt->fetchAll(PDO::FETCH_COLUMN));
+
+            if ($listIds !== []) {
+                $placeholders = implode(',', array_fill(0, count($listIds), '?'));
+
+                $stmt = $pdo->prepare('DELETE FROM candidates WHERE list_id IN (' . $placeholders . ')');
+                $stmt->execute($listIds);
+
+                $stmt = $pdo->prepare('DELETE FROM lists WHERE id IN (' . $placeholders . ')');
+                $stmt->execute($listIds);
+            }
+
+            $stmt = $pdo->prepare('DELETE FROM candidates WHERE specialty_id = :specialty_id');
+            $stmt->execute(['specialty_id' => $specialtyId]);
+
+            $stmt = $pdo->prepare('DELETE FROM specialties WHERE id = :id');
+            $stmt->execute(['id' => $specialtyId]);
+
+            set_flash_message('success', 'Specialty deleted.');
+            redirect_to('modules/admin/manage_lists.php');
         }
     }
 
@@ -133,7 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute(['id' => $listId]);
 
             set_flash_message('success', 'Ο πίνακας και οι υποψήφιοί του διαγράφηκαν.');
-            redirect_to('manage_lists.php');
+            redirect_to('modules/admin/manage_lists.php');
         }
     }
 
@@ -164,6 +306,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'year' => $year,
             ]);
             $listId = (int) $stmt->fetchColumn();
+            $isNewList = $listId <= 0;
+
+            $specialtyStmt = $pdo->prepare('SELECT name FROM specialties WHERE id = :id LIMIT 1');
+            $specialtyStmt->execute(['id' => $specialtyId]);
+            $specialtyName = (string) $specialtyStmt->fetchColumn();
 
             if (!$listId) {
                 $stmt = $pdo->prepare(
@@ -177,32 +324,115 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $listId = (int) $pdo->lastInsertId();
             }
 
+            $positionSnapshot = $mode === 'replace'
+                ? approved_application_positions_for_list($pdo, $listId)
+                : [];
+
             if ($mode === 'replace') {
-                $stmt = $pdo->prepare('DELETE FROM candidates WHERE list_id = :list_id');
-                $stmt->execute(['list_id' => $listId]);
+                $existingStmt = $pdo->prepare(
+                    'SELECT id, name, surname, birth_year
+                     FROM candidates
+                     WHERE list_id = :list_id'
+                );
+                $existingStmt->execute(['list_id' => $listId]);
+
+                $existingCandidates = [];
+                foreach ($existingStmt->fetchAll() as $candidate) {
+                    $existingCandidates[import_candidate_key($candidate)] = (int) $candidate['id'];
+                }
+
+                $pdo->prepare('UPDATE candidates SET position = -id WHERE list_id = :list_id')
+                    ->execute(['list_id' => $listId]);
             }
 
-            $stmt = $pdo->prepare(
+            $insertStmt = $pdo->prepare(
                 'INSERT INTO candidates (name, surname, birth_year, specialty_id, list_id, position, points)
                  VALUES (:name, :surname, :birth_year, :specialty_id, :list_id, :position, :points)'
             );
+            $updateStmt = $pdo->prepare(
+                'UPDATE candidates
+                 SET name = :name, surname = :surname, birth_year = :birth_year,
+                     specialty_id = :specialty_id, list_id = :list_id,
+                     position = :position, points = :points
+                 WHERE id = :id'
+            );
+            $keptIds = [];
 
             foreach ($parsedRows as $row) {
-                $stmt->execute([
-                    'name' => $row['name'],
-                    'surname' => $row['surname'],
-                    'birth_year' => $row['birth_year'],
-                    'specialty_id' => $specialtyId,
-                    'list_id' => $listId,
-                    'position' => $row['position'],
-                    'points' => $row['points'],
-                ]);
+                $candidateId = $mode === 'replace'
+                    ? ($existingCandidates[import_candidate_key($row)] ?? 0)
+                    : 0;
+
+                if ($candidateId > 0) {
+                    $updateStmt->execute([
+                        'name' => $row['name'],
+                        'surname' => $row['surname'],
+                        'birth_year' => $row['birth_year'],
+                        'specialty_id' => $specialtyId,
+                        'list_id' => $listId,
+                        'position' => $row['position'],
+                        'points' => $row['points'],
+                        'id' => $candidateId,
+                    ]);
+                    $keptIds[] = $candidateId;
+                } else {
+                    $insertStmt->execute([
+                        'name' => $row['name'],
+                        'surname' => $row['surname'],
+                        'birth_year' => $row['birth_year'],
+                        'specialty_id' => $specialtyId,
+                        'list_id' => $listId,
+                        'position' => $row['position'],
+                        'points' => $row['points'],
+                    ]);
+                    $keptIds[] = (int) $pdo->lastInsertId();
+                }
+            }
+
+            if ($mode === 'replace' && $keptIds !== []) {
+                $deletePlaceholders = implode(',', array_fill(0, count($keptIds), '?'));
+                $deleteStmt = $pdo->prepare(
+                    'DELETE FROM candidates
+                     WHERE list_id = ? AND id NOT IN (' . $deletePlaceholders . ')'
+                );
+                $deleteStmt->execute(array_merge([$listId], $keptIds));
+            }
+
+            $positionNotifications = notify_position_changes_for_list($pdo, $positionSnapshot);
+            $newListNotifications = $isNewList
+                ? notify_new_list_subscribers($pdo, $specialtyName, $year)
+                : 0;
+
+            if ($newListNotifications > 0 || $positionNotifications > 0) {
+                set_flash_message('info', 'Notifications sent: ' . ($newListNotifications + $positionNotifications) . '.');
             }
 
             set_flash_message('success', 'Ο πίνακας φορτώθηκε επιτυχώς με ' . count($parsedRows) . ' εγγραφές.');
-            redirect_to('manage_lists.php');
+            redirect_to('modules/admin/manage_lists.php');
         }
     }
+}
+
+$listKeyword = trim($_GET['keyword'] ?? '');
+$listSpecialtyFilter = (int) ($_GET['specialty_id'] ?? 0);
+$listYearFilter = trim($_GET['year_filter'] ?? '');
+$listStatusFilter = trim($_GET['status_filter'] ?? '');
+$listOrder = $_GET['order'] ?? 'year_desc';
+
+$listOrderSql = 'l.year DESC, s.name ASC';
+switch ($listOrder) {
+    case 'year_asc':
+        $listOrderSql = 'l.year ASC, s.name ASC';
+        break;
+    case 'specialty_asc':
+        $listOrderSql = 's.name ASC, l.year DESC';
+        break;
+    case 'candidates_desc':
+        $listOrderSql = 'candidates_count DESC, l.year DESC';
+        break;
+    case 'candidates_asc':
+        $listOrderSql = 'candidates_count ASC, l.year DESC';
+        break;
 }
 
 $specialties = $pdo->query(
@@ -211,14 +441,39 @@ $specialties = $pdo->query(
      ORDER BY name ASC'
 )->fetchAll();
 
-$listRows = $pdo->query(
-    'SELECT l.id, l.year, s.name AS specialty_name, COALESCE(s.is_active, 1) AS is_active, COUNT(c.id) AS candidates_count
+$listSql = 'SELECT l.id, l.year, s.name AS specialty_name, COALESCE(s.is_active, 1) AS is_active, COUNT(c.id) AS candidates_count
      FROM lists l
      JOIN specialties s ON s.id = l.specialty_id
      LEFT JOIN candidates c ON c.list_id = l.id
-     GROUP BY l.id, l.year, s.name, s.is_active
-     ORDER BY l.year DESC, s.name ASC'
-)->fetchAll();
+     WHERE 1 = 1';
+$listParams = [];
+
+if ($listKeyword !== '') {
+    $listSql .= ' AND (s.name LIKE :keyword OR CAST(l.year AS CHAR) LIKE :keyword_year)';
+    $listParams['keyword'] = '%' . $listKeyword . '%';
+    $listParams['keyword_year'] = '%' . $listKeyword . '%';
+}
+
+if ($listSpecialtyFilter > 0) {
+    $listSql .= ' AND s.id = :specialty_filter';
+    $listParams['specialty_filter'] = $listSpecialtyFilter;
+}
+
+if ($listYearFilter !== '' && ctype_digit($listYearFilter)) {
+    $listSql .= ' AND l.year = :year_filter';
+    $listParams['year_filter'] = (int) $listYearFilter;
+}
+
+if ($listStatusFilter === 'active') {
+    $listSql .= ' AND COALESCE(s.is_active, 1) = 1';
+} elseif ($listStatusFilter === 'inactive') {
+    $listSql .= ' AND COALESCE(s.is_active, 1) = 0';
+}
+
+$listSql .= ' GROUP BY l.id, l.year, s.name, s.is_active ORDER BY ' . $listOrderSql;
+$listStmt = $pdo->prepare($listSql);
+$listStmt->execute($listParams);
+$listRows = $listStmt->fetchAll();
 
 $messages = array_merge(
     get_flash_messages(),
@@ -309,6 +564,9 @@ $messages = array_merge(
                                             <span class="specialty-desc">
                                                 <?php echo h($specialty['description'] ?: 'Χωρίς περιγραφή'); ?>
                                             </span>
+                                            <button type="submit" name="delete_specialty_id" value="<?php echo h($specialty['id']); ?>" class="table-button danger specialty-delete-button">
+                                                Delete
+                                            </button>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -399,6 +657,46 @@ $messages = array_merge(
                     <div class="section-header">
                         <h2 class="section-title">Υφιστάμενοι Πίνακες</h2>
                         <p class="section-text">Εμφάνιση όλων των πινάκων με πλήθος υποψηφίων ανά ειδικότητα και έτος.</p>
+                    </div>
+
+                    <div class="search-panel">
+                        <form method="get" action="" class="search-bar" role="search" aria-label="Search lists">
+                            <label class="search-bar__field">
+                                <svg class="search-bar__field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="11" cy="11" r="7"></circle>
+                                    <path d="m20 20-3.5-3.5"></path>
+                                </svg>
+                                <input class="search-bar__field-input" type="search" name="keyword" value="<?php echo h($listKeyword); ?>" placeholder="Search specialty or year..." autocomplete="off">
+                            </label>
+
+                            <select class="search-bar__filter" name="specialty_id" aria-label="Specialty filter">
+                                <option value="0">All specialties</option>
+                                <?php foreach ($specialties as $specialty): ?>
+                                    <option value="<?php echo h($specialty['id']); ?>" <?php echo $listSpecialtyFilter === (int) $specialty['id'] ? 'selected' : ''; ?>>
+                                        <?php echo h($specialty['name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+
+                            <input class="search-bar__filter" type="number" name="year_filter" value="<?php echo h($listYearFilter); ?>" placeholder="Year" min="2000" max="2100" aria-label="Year filter">
+
+                            <select class="search-bar__filter" name="status_filter" aria-label="Specialty status filter">
+                                <option value="">All statuses</option>
+                                <option value="active" <?php echo $listStatusFilter === 'active' ? 'selected' : ''; ?>>Active</option>
+                                <option value="inactive" <?php echo $listStatusFilter === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
+                            </select>
+
+                            <select class="search-bar__filter" name="order" aria-label="Order lists">
+                                <option value="year_desc" <?php echo $listOrder === 'year_desc' ? 'selected' : ''; ?>>Newest first</option>
+                                <option value="year_asc" <?php echo $listOrder === 'year_asc' ? 'selected' : ''; ?>>Oldest first</option>
+                                <option value="specialty_asc" <?php echo $listOrder === 'specialty_asc' ? 'selected' : ''; ?>>Specialty A-Z</option>
+                                <option value="candidates_desc" <?php echo $listOrder === 'candidates_desc' ? 'selected' : ''; ?>>Most candidates</option>
+                                <option value="candidates_asc" <?php echo $listOrder === 'candidates_asc' ? 'selected' : ''; ?>>Fewest candidates</option>
+                            </select>
+
+                            <button type="submit" class="search-bar__btn search-bar__btn--primary">Search</button>
+                            <a class="search-bar__btn search-bar__btn--ghost" href="manage_lists.php">Clear</a>
+                        </form>
                     </div>
 
                     <div class="table-wrap">

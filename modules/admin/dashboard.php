@@ -93,7 +93,7 @@ if ($displayName === '') {
                         </div>
                     </a>
 
-                    <a class="admin-tile" href="verify_applications.php">
+                    <a class="admin-tile" href="verify_applications.php" style="display: none;">
                         <span class="admin-tile-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" width="48" height="48" role="img" focusable="false">
                                 <path d="M12 2 4 5v6c0 5 3.5 9.5 8 11 4.5-1.5 8-6 8-11V5l-8-3Z"></path>

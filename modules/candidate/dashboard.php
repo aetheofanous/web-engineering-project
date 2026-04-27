@@ -36,6 +36,11 @@ if ($username === '') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Candidate Dashboard</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
+    <style>
+        .admin-tile[href="profile.php"] .admin-tile-text:not(.clean-profile-text) {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <?php require __DIR__ . '/../../includes/app_topbar.php'; ?>
@@ -82,6 +87,20 @@ if ($username === '') {
                 <h2 class="section-title">Προσωπικές Ενέργειες</h2>
 
                 <div class="admin-nav-grid">
+                    <a class="admin-tile" href="profile.php">
+                        <span class="admin-tile-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="48" height="48" role="img" focusable="false">
+                                <path d="M20 21a8 8 0 0 0-16 0"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </span>
+                        <div class="admin-tile-content">
+                            <span class="admin-tile-title">My Profile</span>
+                            <span class="admin-tile-text clean-profile-text">Update your personal details and notification preferences.</span>
+                            <span class="admin-tile-text">Î•Î½Î·Î¼Î­ÏÏ‰ÏƒÎ· Ï€ÏÎ¿ÏƒÏ‰Ï€Î¹ÎºÏŽÎ½ ÏƒÏ„Î¿Î¹Ï‡ÎµÎ¯Ï‰Î½ ÎºÎ±Î¹ Ï€ÏÎ¿Ï„Î¹Î¼Î®ÏƒÎµÏ‰Î½ notifications.</span>
+                        </div>
+                    </a>
+
                     <a class="admin-tile" href="my-applications.php">
                         <span class="admin-tile-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" width="48" height="48" role="img" focusable="false">

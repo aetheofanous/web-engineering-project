@@ -30,7 +30,26 @@ INSERT INTO candidates (id, name, surname, birth_year, specialty_id, list_id, po
   (6, 'Petros', 'Kleanthous', 1995, 3, 4, 1, 94.10),
   (7, 'Anna', 'Hadjiyianni', 1996, 3, 4, 2, 89.90),
   (8, 'Marios', 'Demetriou', 1991, 4, 5, 1, 86.50),
-  (9, 'Christina', 'Sotiriou', 1997, 4, 5, 2, 84.80);
+  (9, 'Christina', 'Sotiriou', 1997, 4, 5, 2, 84.80),
+  (10, 'George', 'Andreou', 1988, 1, 1, 1, 91.80),
+  (11, 'Irene', 'Michael', 1991, 1, 1, 2, 89.60),
+  (12, 'Stelios', 'Christou', 1993, 1, 1, 3, 86.40),
+  (13, 'Panayiota', 'Savva', 1995, 1, 1, 4, 84.90),
+  (14, 'Kyriakos', 'Loizou', 1987, 1, 2, 4, 86.20),
+  (15, 'Despina', 'Antoniou', 1996, 1, 2, 5, 84.75),
+  (16, 'Michalis', 'Constantinou', 1992, 1, 2, 6, 82.30),
+  (17, 'Elena', 'Theodorou', 1990, 2, 3, 3, 85.60),
+  (18, 'Haris', 'Stylianou', 1986, 2, 3, 4, 83.40),
+  (19, 'Vasiliki', 'Panayiotou', 1994, 2, 3, 5, 80.95),
+  (20, 'Alexandros', 'Markou', 1991, 2, 3, 6, 78.70),
+  (21, 'Dimitra', 'Mouskou', 1993, 3, 4, 3, 87.50),
+  (22, 'Christos', 'Iacovou', 1990, 3, 4, 4, 85.20),
+  (23, 'Marina', 'Philippou', 1997, 3, 4, 5, 82.85),
+  (24, 'Pavlos', 'Sergiou', 1989, 3, 4, 6, 79.40),
+  (25, 'Katerina', 'Neophytou', 1994, 4, 5, 3, 82.10),
+  (26, 'Rafaella', 'Anastasiou', 1998, 4, 5, 4, 79.90),
+  (27, 'Antonis', 'Evripidou', 1985, 4, 5, 5, 77.35),
+  (28, 'Georgia', 'Lazarou', 1992, 4, 5, 6, 75.80);
 
 INSERT INTO users (
   id, name, surname, email, password, phone, role, notify_new_lists, notify_position_changes

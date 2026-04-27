@@ -90,10 +90,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$keyword = trim($_GET['keyword'] ?? '');
+$statusFilter = trim($_GET['status_filter'] ?? '');
+$specialtyFilter = (int) ($_GET['specialty_id'] ?? 0);
+$yearFilter = trim($_GET['year_filter'] ?? '');
+$order = $_GET['order'] ?? 'linked_desc';
+
+$orderSql = 'applications.linked_at DESC';
+switch ($order) {
+    case 'linked_asc':
+        $orderSql = 'applications.linked_at ASC';
+        break;
+    case 'year_desc':
+        $orderSql = 'lists.year DESC, candidates.position ASC';
+        break;
+    case 'position_asc':
+        $orderSql = 'candidates.position ASC, lists.year DESC';
+        break;
+    case 'points_desc':
+        $orderSql = 'candidates.points DESC, candidates.position ASC';
+        break;
+}
+
+$specialties = fetch_specialties();
 $candidateOptions = fetch_candidate_options();
 
-$applicationsStatement = $pdo->prepare(
-    'SELECT applications.id, applications.linked_at, applications.verification_status,
+$applicationsSql = 'SELECT applications.id, applications.linked_at, applications.verification_status,
             applications.verification_notes, applications.verified_at,
             candidates.id AS candidate_id,
             candidates.name, candidates.surname, candidates.position, candidates.points,
@@ -103,10 +125,34 @@ $applicationsStatement = $pdo->prepare(
      INNER JOIN candidates ON candidates.id = applications.candidate_id
      INNER JOIN lists ON lists.id = candidates.list_id
      INNER JOIN specialties ON specialties.id = candidates.specialty_id
-     WHERE applications.user_id = :user_id
-     ORDER BY applications.linked_at DESC'
-);
-$applicationsStatement->execute(['user_id' => $user['id']]);
+     WHERE applications.user_id = :user_id';
+$applicationParams = ['user_id' => $user['id']];
+
+if ($keyword !== '') {
+    $applicationsSql .= ' AND (candidates.name LIKE :kw_name OR candidates.surname LIKE :kw_surname OR specialties.name LIKE :kw_specialty)';
+    $applicationParams['kw_name'] = '%' . $keyword . '%';
+    $applicationParams['kw_surname'] = '%' . $keyword . '%';
+    $applicationParams['kw_specialty'] = '%' . $keyword . '%';
+}
+
+if (in_array($statusFilter, ['pending', 'approved', 'rejected'], true)) {
+    $applicationsSql .= ' AND applications.verification_status = :status_filter';
+    $applicationParams['status_filter'] = $statusFilter;
+}
+
+if ($specialtyFilter > 0) {
+    $applicationsSql .= ' AND specialties.id = :specialty_id';
+    $applicationParams['specialty_id'] = $specialtyFilter;
+}
+
+if ($yearFilter !== '' && ctype_digit($yearFilter)) {
+    $applicationsSql .= ' AND lists.year = :year_filter';
+    $applicationParams['year_filter'] = (int) $yearFilter;
+}
+
+$applicationsSql .= ' ORDER BY ' . $orderSql;
+$applicationsStatement = $pdo->prepare($applicationsSql);
+$applicationsStatement->execute($applicationParams);
 $applications = $applicationsStatement->fetchAll();
 $approvedApplications = array_values(array_filter($applications, function ($application) {
     return ($application['verification_status'] ?? 'pending') === 'approved';
@@ -204,6 +250,8 @@ $messages = array_merge(
         .viz-card { background: #ffffff; border: 1px solid #d7e1ea; border-radius: 8px; padding: 18px; box-shadow: 0 4px 14px rgba(15, 42, 66, 0.05); }
         .viz-card h3 { margin: 0 0 12px 0; font-size: 1.02rem; color: #173650; }
         .viz-card .chart-canvas-wrap { position: relative; height: 260px; }
+        .table-wrap .table-actions > button.table-button.danger { display: none; }
+        .inline-action-form { margin: 0; }
     </style>
 </head>
 <body>
@@ -261,6 +309,42 @@ $messages = array_merge(
                         <p class="section-text">Σύνολο συνδέσεων: <strong><?php echo h(count($applications)); ?></strong></p>
                     </div>
 
+                    <div class="search-panel">
+                        <form method="get" action="" class="search-bar" role="search" aria-label="Search applications">
+                            <label class="search-bar__field">
+                                <svg class="search-bar__field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="11" cy="11" r="7"></circle>
+                                    <path d="m20 20-3.5-3.5"></path>
+                                </svg>
+                                <input class="search-bar__field-input" type="search" name="keyword" value="<?php echo h($keyword); ?>" placeholder="Search application..." autocomplete="off">
+                            </label>
+                            <select class="search-bar__filter" name="status_filter" aria-label="Status filter">
+                                <option value="">All statuses</option>
+                                <option value="pending" <?php echo $statusFilter === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                <option value="approved" <?php echo $statusFilter === 'approved' ? 'selected' : ''; ?>>Approved</option>
+                                <option value="rejected" <?php echo $statusFilter === 'rejected' ? 'selected' : ''; ?>>Rejected</option>
+                            </select>
+                            <select class="search-bar__filter" name="specialty_id" aria-label="Specialty filter">
+                                <option value="0">All specialties</option>
+                                <?php foreach ($specialties as $specialty): ?>
+                                    <option value="<?php echo h($specialty['id']); ?>" <?php echo $specialtyFilter === (int) $specialty['id'] ? 'selected' : ''; ?>>
+                                        <?php echo h($specialty['name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <input class="search-bar__filter" type="number" name="year_filter" value="<?php echo h($yearFilter); ?>" placeholder="Year" min="2000" max="2100" aria-label="Year filter">
+                            <select class="search-bar__filter" name="order" aria-label="Order applications">
+                                <option value="linked_desc" <?php echo $order === 'linked_desc' ? 'selected' : ''; ?>>Newest linked</option>
+                                <option value="linked_asc" <?php echo $order === 'linked_asc' ? 'selected' : ''; ?>>Oldest linked</option>
+                                <option value="year_desc" <?php echo $order === 'year_desc' ? 'selected' : ''; ?>>Newest list</option>
+                                <option value="position_asc" <?php echo $order === 'position_asc' ? 'selected' : ''; ?>>Best position</option>
+                                <option value="points_desc" <?php echo $order === 'points_desc' ? 'selected' : ''; ?>>Most points</option>
+                            </select>
+                            <button type="submit" class="search-bar__btn search-bar__btn--primary">Search</button>
+                            <a class="search-bar__btn search-bar__btn--ghost" href="my-applications.php">Clear</a>
+                        </form>
+                    </div>
+
                     <div class="table-wrap">
                         <table>
                             <thead>
@@ -301,6 +385,11 @@ $messages = array_merge(
                                             <td><?php echo h(date('d/m/Y H:i', strtotime($application['linked_at']))); ?></td>
                                             <td>
                                                 <div class="table-actions">
+                                                    <form method="post" action="my-applications.php" class="inline-action-form">
+                                                        <input type="hidden" name="action" value="unlink">
+                                                        <input type="hidden" name="application_id" value="<?php echo h($application['id']); ?>">
+                                                        <button type="submit" class="table-button danger">Remove</button>
+                                                    </form>
                                                     <button type="button" class="table-button danger"
                                                         onclick="openUnlinkModal(<?php echo h($application['id']); ?>, <?php echo json_encode($application['name'] . ' ' . $application['surname']); ?>)">
                                                         Αφαίρεση
