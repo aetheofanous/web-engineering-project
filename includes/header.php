@@ -81,3 +81,5 @@ $flashes = get_flashes();
                 <?php echo e($flash['message']); ?>
             </div>
         <?php endforeach; ?>
+
+        <?php require __DIR__ . '/flash_autodismiss.php'; ?>

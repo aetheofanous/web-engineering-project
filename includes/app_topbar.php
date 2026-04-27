@@ -31,3 +31,4 @@ $topbarUser = current_user();
         </div>
     </div>
 </header>
+<?php require __DIR__ . '/flash_autodismiss.php'; ?>
