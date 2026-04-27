@@ -92,6 +92,123 @@ $chartStatusLabels = array_map(function ($row) {
 $chartStatusCounts = array_map(function ($row) {
     return (int) $row['total'];
 }, $listsByStatus);
+
+function reports_pdf_escape(string $value): string
+{
+    $value = (string) iconv('UTF-8', 'Windows-1252//TRANSLIT//IGNORE', $value);
+    return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $value);
+}
+
+function reports_build_pdf(array $summary, array $perSpecialty, array $perYear): string
+{
+    $lines = [
+        'Appointable Lists Report',
+        'Generated: ' . date('Y-m-d H:i'),
+        '',
+        'Summary',
+        'Users: ' . $summary['users'],
+        'Candidates: ' . $summary['candidates'],
+        'Lists: ' . $summary['lists'],
+        'Average age: ' . number_format((float) $summary['avg_age'], 1),
+        '',
+        'Candidates per Specialty',
+    ];
+
+    foreach ($perSpecialty as $row) {
+        $lines[] = sprintf(
+            '%s | candidates: %s | avg age: %s | avg points: %s',
+            $row['name'],
+            $row['total_candidates'],
+            $row['avg_age'] !== null ? $row['avg_age'] : '-',
+            $row['avg_points'] !== null ? $row['avg_points'] : '-'
+        );
+    }
+
+    $lines[] = '';
+    $lines[] = 'Candidates per Year';
+    foreach ($perYear as $row) {
+        $lines[] = sprintf('%s | candidates: %s', $row['year'], $row['total_candidates']);
+    }
+
+    $content = "BT\n/F1 11 Tf\n50 790 Td\n14 TL\n";
+    foreach ($lines as $index => $line) {
+        if ($index > 0) {
+            $content .= "T*\n";
+        }
+        $content .= '(' . reports_pdf_escape(substr($line, 0, 96)) . ") Tj\n";
+    }
+    $content .= "ET";
+
+    $objects = [];
+    $objects[] = "<< /Type /Catalog /Pages 2 0 R >>";
+    $objects[] = "<< /Type /Pages /Kids [3 0 R] /Count 1 >>";
+    $objects[] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>";
+    $objects[] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
+    $objects[] = "<< /Length " . strlen($content) . " >>\nstream\n" . $content . "\nendstream";
+
+    $pdf = "%PDF-1.4\n";
+    $offsets = [0];
+    foreach ($objects as $i => $object) {
+        $offsets[] = strlen($pdf);
+        $pdf .= ($i + 1) . " 0 obj\n" . $object . "\nendobj\n";
+    }
+
+    $xrefOffset = strlen($pdf);
+    $pdf .= "xref\n0 " . (count($objects) + 1) . "\n";
+    $pdf .= "0000000000 65535 f \n";
+    for ($i = 1; $i <= count($objects); $i++) {
+        $pdf .= sprintf("%010d 00000 n \n", $offsets[$i]);
+    }
+    $pdf .= "trailer\n<< /Size " . (count($objects) + 1) . " /Root 1 0 R >>\n";
+    $pdf .= "startxref\n" . $xrefOffset . "\n%%EOF";
+
+    return $pdf;
+}
+
+if (isset($_GET['export']) && $_GET['export'] === 'excel') {
+    header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="appointable-lists-report.xls"');
+    echo "\xEF\xBB\xBF";
+    ?>
+    <table border="1">
+        <tr><th colspan="4">Appointable Lists Report</th></tr>
+        <tr><th>Users</th><th>Candidates</th><th>Lists</th><th>Average Age</th></tr>
+        <tr>
+            <td><?php echo h($summary['users']); ?></td>
+            <td><?php echo h($summary['candidates']); ?></td>
+            <td><?php echo h($summary['lists']); ?></td>
+            <td><?php echo h(number_format($summary['avg_age'], 1)); ?></td>
+        </tr>
+    </table>
+    <br>
+    <table border="1">
+        <tr><th>Specialty</th><th>Candidates</th><th>Average Age</th><th>Average Points</th></tr>
+        <?php foreach ($perSpecialty as $row): ?>
+            <tr>
+                <td><?php echo h($row['name']); ?></td>
+                <td><?php echo h($row['total_candidates']); ?></td>
+                <td><?php echo h($row['avg_age'] ?? '-'); ?></td>
+                <td><?php echo h($row['avg_points'] ?? '-'); ?></td>
+            </tr>
+        <?php endforeach; ?>
+    </table>
+    <br>
+    <table border="1">
+        <tr><th>Year</th><th>Candidates</th></tr>
+        <?php foreach ($perYear as $row): ?>
+            <tr><td><?php echo h($row['year']); ?></td><td><?php echo h($row['total_candidates']); ?></td></tr>
+        <?php endforeach; ?>
+    </table>
+    <?php
+    exit;
+}
+
+if (isset($_GET['export']) && $_GET['export'] === 'pdf') {
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="appointable-lists-report.pdf"');
+    echo reports_build_pdf($summary, $perSpecialty, $perYear);
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="el">
@@ -110,11 +227,11 @@ $chartStatusCounts = array_map(function ($row) {
         }
 
         .chart-card {
-            background: #ffffff;
-            border: 1px solid #d7e1ea;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbfd 100%);
+            border: 1px solid #cfdce8;
             border-radius: 8px;
-            padding: 18px;
-            box-shadow: 0 4px 14px rgba(15, 42, 66, 0.05);
+            padding: 20px;
+            box-shadow: 0 10px 24px rgba(15, 42, 66, 0.08);
         }
 
         .chart-card h3 {
@@ -126,6 +243,19 @@ $chartStatusCounts = array_map(function ($row) {
         .chart-card .chart-canvas-wrap {
             position: relative;
             height: 260px;
+        }
+
+        .report-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 14px 0 4px;
+        }
+
+        .live-status {
+            color: #5b6f83;
+            font-size: 0.9rem;
+            margin: 4px 0 0;
         }
     </style>
 </head>
@@ -143,6 +273,11 @@ $chartStatusCounts = array_map(function ($row) {
                     </a>
                 </div>
                 <h1 class="auth-title">Reports</h1>
+                <div class="report-actions">
+                    <a class="button-link secondary" href="reports.php?export=pdf">Export PDF</a>
+                    <a class="button-link secondary" href="reports.php?export=excel">Export Excel</a>
+                </div>
+                <p class="live-status" id="reportsLiveStatus">Live charts refresh automatically.</p>
                 <p class="auth-subtitle">Στατιστικά των πινάκων διοριστέων με συγκεντρωτική και γραφική παρουσίαση για άμεση εποπτεία.</p>
             </div>
 
@@ -150,19 +285,19 @@ $chartStatusCounts = array_map(function ($row) {
                 <div class="stats-grid">
                     <section class="stat-card">
                         <span class="stat-label">Χρήστες</span>
-                        <strong class="stat-value"><?php echo h($summary['users']); ?></strong>
+                        <strong class="stat-value" id="reportUsers"><?php echo h($summary['users']); ?></strong>
                     </section>
                     <section class="stat-card">
                         <span class="stat-label">Υποψήφιοι</span>
-                        <strong class="stat-value"><?php echo h($summary['candidates']); ?></strong>
+                        <strong class="stat-value" id="reportCandidates"><?php echo h($summary['candidates']); ?></strong>
                     </section>
                     <section class="stat-card">
                         <span class="stat-label">Πίνακες</span>
-                        <strong class="stat-value"><?php echo h($summary['lists']); ?></strong>
+                        <strong class="stat-value" id="reportLists"><?php echo h($summary['lists']); ?></strong>
                     </section>
                     <section class="stat-card">
                         <span class="stat-label">Μέσος Όρος Ηλικίας</span>
-                        <strong class="stat-value"><?php echo h(number_format($summary['avg_age'], 1)); ?></strong>
+                        <strong class="stat-value" id="reportAvgAge"><?php echo h(number_format($summary['avg_age'], 1)); ?></strong>
                     </section>
                 </div>
 
@@ -290,9 +425,10 @@ $chartStatusCounts = array_map(function ($row) {
         const roleCounts      = <?php echo json_encode($chartRoleCounts); ?>;
         const statusLabels    = <?php echo json_encode($chartStatusLabels, JSON_UNESCAPED_UNICODE); ?>;
         const statusCounts    = <?php echo json_encode($chartStatusCounts); ?>;
+        const charts = {};
 
         // Specialty bar + age overlay
-        new Chart(document.getElementById('chartSpecialty'), {
+        charts.specialty = new Chart(document.getElementById('chartSpecialty'), {
             type: 'bar',
             data: {
                 labels: specialtyLabels,
@@ -326,7 +462,7 @@ $chartStatusCounts = array_map(function ($row) {
         });
 
         // Year line chart
-        new Chart(document.getElementById('chartYear'), {
+        charts.year = new Chart(document.getElementById('chartYear'), {
             type: 'line',
             data: {
                 labels: yearLabels,
@@ -349,7 +485,7 @@ $chartStatusCounts = array_map(function ($row) {
         });
 
         // Role doughnut
-        new Chart(document.getElementById('chartRole'), {
+        charts.role = new Chart(document.getElementById('chartRole'), {
             type: 'doughnut',
             data: {
                 labels: roleLabels,
@@ -366,7 +502,7 @@ $chartStatusCounts = array_map(function ($row) {
         });
 
         // Status pie
-        new Chart(document.getElementById('chartStatus'), {
+        charts.status = new Chart(document.getElementById('chartStatus'), {
             type: 'pie',
             data: {
                 labels: statusLabels,
@@ -381,6 +517,69 @@ $chartStatusCounts = array_map(function ($row) {
                 plugins: { legend: { position: 'bottom' } }
             }
         });
+
+        function setText(id, value) {
+            const node = document.getElementById(id);
+            if (node) node.textContent = value;
+        }
+
+        function updateChart(chart, labels, datasets) {
+            chart.data.labels = labels;
+            datasets.forEach(function (data, index) {
+                chart.data.datasets[index].data = data;
+            });
+            chart.update('none');
+        }
+
+        function refreshReports() {
+            fetch('../../api/stats.php?scope=reports', { cache: 'no-store' })
+                .then(function (response) { return response.json(); })
+                .then(function (payload) {
+                    if (!payload || payload.status !== 'success') return;
+
+                    const summary = payload.summary || {};
+                    setText('reportUsers', summary.users || 0);
+                    setText('reportCandidates', summary.candidates || 0);
+                    setText('reportLists', summary.lists || 0);
+                    setText('reportAvgAge', Number(summary.avg_age || 0).toFixed(1));
+
+                    const perSpecialty = payload.per_specialty || [];
+                    const perYear = payload.per_year || [];
+                    const usersByRole = payload.users_by_role || [];
+                    const listsByStatus = payload.lists_by_status || [];
+
+                    updateChart(
+                        charts.specialty,
+                        perSpecialty.map(function (row) { return row.name; }),
+                        [
+                            perSpecialty.map(function (row) { return Number(row.total_candidates || 0); }),
+                            perSpecialty.map(function (row) { return Number(row.avg_age || 0); })
+                        ]
+                    );
+                    updateChart(
+                        charts.year,
+                        perYear.map(function (row) { return String(row.year); }),
+                        [perYear.map(function (row) { return Number(row.total_candidates || 0); })]
+                    );
+                    updateChart(
+                        charts.role,
+                        usersByRole.map(function (row) { return String(row.role).charAt(0).toUpperCase() + String(row.role).slice(1); }),
+                        [usersByRole.map(function (row) { return Number(row.total || 0); })]
+                    );
+                    updateChart(
+                        charts.status,
+                        listsByStatus.map(function (row) { return String(row.status).charAt(0).toUpperCase() + String(row.status).slice(1); }),
+                        [listsByStatus.map(function (row) { return Number(row.total || 0); })]
+                    );
+
+                    setText('reportsLiveStatus', 'Last updated: ' + (payload.updated_at || 'now'));
+                })
+                .catch(function () {
+                    setText('reportsLiveStatus', 'Live refresh paused.');
+                });
+        }
+
+        setInterval(refreshReports, 5000);
     })();
     </script>
 </body>
